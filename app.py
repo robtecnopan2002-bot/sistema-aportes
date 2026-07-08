@@ -53,8 +53,9 @@ elif st.session_state.tela_atual == "tela_2":
         login_cpf = st.text_input("Digite seu CPF (apenas números)", key="input_login_cpf")
         login_senha = st.text_input("Digite sua Senha", type="password", key="input_login_senha")
         if st.button("Entrar no Sistema", type="primary"):
-            if login_cpf in st.session_state.usuarios_cadastrados:
-                usuario = st.session_state.usuarios_cadastrados[login_cpf]
+            # NOVO: Consulta o banco de dados real
+            usuario = banco.obter_usuario(login_cpf)
+            if usuario:
                 if usuario["status"] == "Pendente":
                     st.warning("⚠️ Seu cadastro ainda precisa do aceite do Administrador (Tela 5).")
                 elif usuario["senha"] == login_senha:
@@ -77,14 +78,13 @@ elif st.session_state.tela_atual == "tela_2":
         if st.button("Finalizar Meu Cadastro", type="secondary"):
             if not (cad_nome and cad_cpf and cad_tel and cad_cep and cad_email and cad_senha):
                 st.error("⚠️ Preencha todos os campos.")
-            elif cad_cpf in st.session_state.usuarios_cadastrados:
-                st.warning("⚠️ CPF já registrado.")
             else:
-                st.session_state.usuarios_cadastrados[cad_cpf] = {
-                    "nome": cad_nome, "cpf": cad_cpf, "telefone": cad_tel, "cep": cad_cep,
-                    "email": cad_email, "senha": cad_senha, "status": "Pendente", "saldo": 0.0, "plano_ativo": "Nenhum"
-                }
-                st.success("✅ Cadastro realizado! Aguarde o aceite do administrador no painel.")
+                # NOVO: Grava o novo usuário de forma permanente
+                sucesso = banco.cadastrar_usuario(cad_nome, cad_cpf, cad_tel, cad_cep, cad_email, cad_senha)
+                if sucesso:
+                    st.success("✅ Cadastro realizado! Aguarde o aceite do administrador no painel.")
+                else:
+                    st.warning("⚠️ CPF já registrado.")
                 
     st.markdown("---")
     if st.button("← Voltar para a Tela Inicial"):
@@ -93,7 +93,8 @@ elif st.session_state.tela_atual == "tela_2":
 # --- TELA 3: PAINEL DO INVESTIDOR ---
 elif st.session_state.tela_atual == "tela_3":
     cpf = st.session_state.usuario_logado
-    user = st.session_state.usuarios_cadastrados[cpf]
+    # NOVO: Busca dados atualizados do banco
+    user = banco.obter_usuario(cpf)
     st.title("📥 Painel do Investidor")
     st.subheader(f"Seja bem-vindo, {user['nome']}.")
     
@@ -101,14 +102,14 @@ elif st.session_state.tela_atual == "tela_3":
     with col_s1:
         st.metric(label="💰 Seu Saldo Disponível", value=f"R$ {user['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     with col_s2:
-        st.metric(label="📌 Plano Ativo", value=user['plano_ativo'])
+        st.metric(label="📌 Plano Ativo", value=user['plano_active'] if 'plano_active' in user else user.get('plano_ativo', 'Nenhum'))
         
     st.markdown("---")
     tab_fazer_aporte, tab_solicitar_saque = st.tabs(["Fazer Novo Aporte", "Solicitar Saque (Resgate)"])
     
     with tab_fazer_aporte:
         for nome_plano, valor_plano in PLANOS.items():
-            col_info, col_botao = st.columns(2)  # CORRIGIDO: Passado o número 2 explicitamente
+            col_info, col_botao = st.columns(2)
             with col_info:
                 st.write(f"🔹 **Plano {nome_plano}** — Valor único:")
                 st.subheader(f"R$ {valor_plano:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -128,10 +129,8 @@ elif st.session_state.tela_atual == "tela_3":
             chave_pix_saque = st.text_input("Informe sua Chave PIX")
             if st.button("Confirmar Pedido de Saque", type="primary"):
                 if chave_pix_saque:
-                    st.session_state.historico_saques.append({
-                        "id_saque": len(st.session_state.historico_saques) + 1, "cpf": cpf,
-                        "nome": user["nome"], "valor": valor_saque, "chave_pix": chave_pix_saque, "status": "Pendente"
-                    })
+                    # NOVO: Registra o pedido de saque no banco
+                    banco.solicitar_saque(cpf, user["nome"], valor_saque, chave_pix_saque)
                     st.success("✅ Solicitação de saque enviada!")
                     time.sleep(1.5)
                     st.rerun()
@@ -145,7 +144,8 @@ elif st.session_state.tela_atual == "tela_4":
     plano = st.session_state.plano_selecionado
     valor = st.session_state.valor_selecionado
     cpf_cliente = st.session_state.usuario_logado
-    nome_cliente = st.session_state.usuarios_cadastrados[cpf_cliente]["nome"]
+    user_cliente = banco.obter_usuario(cpf_cliente)
+    nome_cliente = user_cliente["nome"]
     
     st.subheader(f"Você escolheu o plano **{plano}**")
     st.info(f"Valor a pagar: **R$ {valor:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
@@ -157,10 +157,8 @@ elif st.session_state.tela_atual == "tela_4":
     st.markdown("---")
     
     if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True):
-        st.session_state.historico_aportes.append({
-            "id_aporte": len(st.session_state.historico_aportes) + 1, "cpf": cpf_cliente,
-            "nome": nome_cliente, "plano": plano, "valor": valor, "status": "Pendente"
-        })
+        # NOVO: Salva o pedido de aporte no banco
+        banco.solicitar_aporte(cpf_cliente, nome_cliente, plano, valor)
         st.success("✅ Notificação de pagamento enviada!")
         time.sleep(2)
         navegar_para("tela_3")
@@ -171,11 +169,9 @@ elif st.session_state.tela_atual == "tela_4":
 elif st.session_state.tela_atual == "tela_admin":
     st.title("🛠️ Painel Administrativo Geral")
     
-    # Se o administrador NÃO estiver logado, exibe a tela de login de segurança
     if not st.session_state.admin_logado:
         st.subheader("🔒 Acesso Restrito")
         senha_admin = st.text_input("Digite a senha master do sistema", type="password", key="input_senha_admin")
-        
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             if st.button("Verificar Senha", type="primary", use_container_width=True):
@@ -190,9 +186,8 @@ elif st.session_state.tela_atual == "tela_admin":
             if st.button("← Voltar para a Home", type="secondary", use_container_width=True):
                 navegar_para("tela_1")
                 
-    # Se o administrador JÁ estiver logado com sucesso, libera as Telas 5, 6 e 7
     else:
-        col_logout_admin1, col_logout_admin2 = st.columns([3, 1])
+        col_logout_admin1, col_logout_admin2 = st.columns(2)
         with col_logout_admin1:
             st.write("Gerencie os acessos, valide pagamentos e autorize os saques dos investidores.")
         with col_logout_admin2:
@@ -201,14 +196,14 @@ elif st.session_state.tela_atual == "tela_admin":
                 navegar_para("tela_1")
                 
         st.markdown("---")
-        
         aba_tela5, aba_tela6, aba_tela7 = st.tabs([
             "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques"
         ])
         
         with aba_tela5:
             st.subheader("Novos clientes aguardando autorização")
-            clientes_pendentes = [u for u in st.session_state.usuarios_cadastrados.values() if u["status"] == "Pendente"]
+            # NOVO: Lista direto do banco
+            clientes_pendentes = banco.listar_usuarios_pendentes()
             if not clientes_pendentes:
                 st.info("Nenhum cadastro pendente.")
             else:
@@ -216,14 +211,16 @@ elif st.session_state.tela_atual == "tela_admin":
                     with st.expander(f"📋 Cadastro de: {cl['nome']}"):
                         st.write(f"**CPF:** {cl['cpf']} | **Tel:** {cl['telefone']} | **CEP:** {cl['cep']}")
                         if st.button(f"Aprovar {cl['nome']}", key=f"aceite_{cl['cpf']}", type="primary"):
-                            st.session_state.usuarios_cadastrados[cl['cpf']]["status"] = "Aprovado"
+                            # NOVO: Aprova e salva no banco
+                            banco.aprovar_usuario(cl['cpf'])
                             st.success("Cliente liberado!")
                             time.sleep(1)
                             st.rerun()
 
         with aba_tela6:
             st.subheader("Aportes solicitados por PIX")
-            aportes_pendentes = [a for a in st.session_state.historico_aportes if a["status"] == "Pendente"]
+            # NOVO: Lista do banco
+            aportes_pendentes = banco.listar_aportes_pendentes()
             if not aportes_pendentes:
                 st.info("Nenhum pagamento pendente.")
             else:
@@ -231,16 +228,16 @@ elif st.session_state.tela_atual == "tela_admin":
                     with st.expander(f"💸 Aporte #{ap['id_aporte']} - {ap['nome']}"):
                         st.write(f"**Plano:** {ap['plano']} | **Valor:** R$ {ap['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                         if st.button(f"Confirmar PIX", key=f"conf_ap_{ap['id_aporte']}", type="primary"):
-                            ap["status"] = "Aprovado"
-                            st.session_state.usuarios_cadastrados[ap['cpf']]["saldo"] += ap['valor']
-                            st.session_state.usuarios_cadastrados[ap['cpf']]["plano_ativo"] = ap['plano']
+                            # NOVO: Valida e atualiza saldo no banco permanentemente
+                            banco.aprovar_aporte(ap['id_aporte'], ap['cpf'], ap['valor'], ap['plano'])
                             st.success("Saldo inserido!")
                             time.sleep(1)
                             st.rerun()
 
         with aba_tela7:
             st.subheader("Pedidos de Resgate de Lucros")
-            saques_pendentes = [s for s in st.session_state.historico_saques if s["status"] == "Pendente"]
+            # NOVO: Lista do banco
+            saques_pendentes = banco.listar_saques_pendentes()
             if not saques_pendentes:
                 st.info("Não existem saques aguardando autorização.")
             else:
@@ -249,8 +246,8 @@ elif st.session_state.tela_atual == "tela_admin":
                         st.write(f"**Valor:** R$ {sq['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                         st.write(f"**Chave PIX:** {sq['chave_pix']}")
                         if st.button(f"Liquidar Saque", key=f"conf_sq_{sq['id_saque']}", type="primary"):
-                            sq["status"] = "Concluído"
-                            st.session_state.usuarios_cadastrados[sq['cpf']]["saldo"] -= sq['valor']
+                            # NOVO: Deduz do banco permanentemente
+                            banco.aprovar_saque(sq['id_saque'], sq['cpf'], sq['valor'])
                             st.success("Saque autorizado e debitado!")
                             time.sleep(1)
                             st.rerun()
