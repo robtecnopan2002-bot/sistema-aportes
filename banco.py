@@ -159,17 +159,27 @@ def aprovar_saque(id_saque, cpf, valor):
 # Inicializa as tabelas automaticamente ao importar o arquivo
 inicializar_banco()
 
-def aplicar_rendimento_diario(porcentagem):
-    """Aplica o rendimento diário sobre o saldo de todos os usuários aprovados."""
+
+def listar_usuarios_ativos():
+    """Retorna a lista de todos os usuários aprovados e ativos no sistema."""
     conn = conectar()
     cursor = conn.cursor()
-    # Multiplica o saldo atual pelo rendimento (ex: se render 1%, multiplica por 1.01)
+    cursor.execute("SELECT nome, cpf, saldo, plano_ativo FROM usuarios WHERE status = 'Aprovado'")
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"nome": r[0], "cpf": r[1], "saldo": r[2], "plano_ativo": r[3]} for r in rows]
+
+def aplicar_rendimento_manual(cpf, porcentagem):
+    """Aplica o rendimento configurado manualmente para um usuário específico."""
+    conn = conectar()
+    cursor = conn.cursor()
     fator_multiplicador = 1 + (porcentagem / 100)
     cursor.execute("""
         UPDATE usuarios 
         SET saldo = saldo * ? 
-        WHERE status = 'Aprovado' AND saldo > 0
-    """, (fator_multiplicador,))
+        WHERE cpf = ?
+    """, (fator_multiplicador, cpf))
     conn.commit()
     conn.close()
+
 
