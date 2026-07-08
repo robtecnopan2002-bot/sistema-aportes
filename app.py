@@ -157,7 +157,6 @@ elif st.session_state.tela_atual == "tela_4":
     st.markdown("---")
     
     if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True):
-        # NOVO: Salva o pedido de aporte no banco
         banco.solicitar_aporte(cpf_cliente, nome_cliente, plano, valor)
         st.success("✅ Notificação de pagamento enviada!")
         time.sleep(2)
@@ -165,7 +164,7 @@ elif st.session_state.tela_atual == "tela_4":
     if st.button("← Mudar de Plano"):
         navegar_para("tela_3")
 
-# --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7) ---
+# --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7 + RENDIMENTOS) ---
 elif st.session_state.tela_atual == "tela_admin":
     st.title("🛠️ Painel Administrativo Geral")
     
@@ -196,13 +195,13 @@ elif st.session_state.tela_atual == "tela_admin":
                 navegar_para("tela_1")
                 
         st.markdown("---")
-        aba_tela5, aba_tela6, aba_tela7 = st.tabs([
-            "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques"
+        # Adicionada a aba de Rendimentos
+        aba_tela5, aba_tela6, aba_tela7, aba_rendimentos = st.tabs([
+            "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques", "📈 Rendimentos"
         ])
         
         with aba_tela5:
             st.subheader("Novos clientes aguardando autorização")
-            # NOVO: Lista direto do banco
             clientes_pendentes = banco.listar_usuarios_pendentes()
             if not clientes_pendentes:
                 st.info("Nenhum cadastro pendente.")
@@ -211,7 +210,6 @@ elif st.session_state.tela_atual == "tela_admin":
                     with st.expander(f"📋 Cadastro de: {cl['nome']}"):
                         st.write(f"**CPF:** {cl['cpf']} | **Tel:** {cl['telefone']} | **CEP:** {cl['cep']}")
                         if st.button(f"Aprovar {cl['nome']}", key=f"aceite_{cl['cpf']}", type="primary"):
-                            # NOVO: Aprova e salva no banco
                             banco.aprovar_usuario(cl['cpf'])
                             st.success("Cliente liberado!")
                             time.sleep(1)
@@ -219,7 +217,6 @@ elif st.session_state.tela_atual == "tela_admin":
 
         with aba_tela6:
             st.subheader("Aportes solicitados por PIX")
-            # NOVO: Lista do banco
             aportes_pendentes = banco.listar_aportes_pendentes()
             if not aportes_pendentes:
                 st.info("Nenhum pagamento pendente.")
@@ -228,7 +225,6 @@ elif st.session_state.tela_atual == "tela_admin":
                     with st.expander(f"💸 Aporte #{ap['id_aporte']} - {ap['nome']}"):
                         st.write(f"**Plano:** {ap['plano']} | **Valor:** R$ {ap['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                         if st.button(f"Confirmar PIX", key=f"conf_ap_{ap['id_aporte']}", type="primary"):
-                            # NOVO: Valida e atualiza saldo no banco permanentemente
                             banco.aprovar_aporte(ap['id_aporte'], ap['cpf'], ap['valor'], ap['plano'])
                             st.success("Saldo inserido!")
                             time.sleep(1)
@@ -236,7 +232,6 @@ elif st.session_state.tela_atual == "tela_admin":
 
         with aba_tela7:
             st.subheader("Pedidos de Resgate de Lucros")
-            # NOVO: Lista do banco
             saques_pendentes = banco.listar_saques_pendentes()
             if not saques_pendentes:
                 st.info("Não existem saques aguardando autorização.")
@@ -246,8 +241,24 @@ elif st.session_state.tela_atual == "tela_admin":
                         st.write(f"**Valor:** R$ {sq['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                         st.write(f"**Chave PIX:** {sq['chave_pix']}")
                         if st.button(f"Liquidar Saque", key=f"conf_sq_{sq['id_saque']}", type="primary"):
-                            # NOVO: Deduz do banco permanentemente
                             banco.aprovar_saque(sq['id_saque'], sq['cpf'], sq['valor'])
                             st.success("Saque autorizado e debitado!")
                             time.sleep(1)
                             st.rerun()
+
+        # NOVO: Tela de rodar os rendimentos do dia
+        with aba_rendimentos:
+            st.subheader("Distribuição de Lucros Diários")
+            st.write("Clique no botão abaixo para rodar o algoritmo de rendimento do dia útil. O sistema vai aplicar uma taxa aleatória entre **0,1% e 1,0%** no saldo de todos os investidores ativos.")
+            
+            import random
+            if st.button("🚀 Rodar Rendimento Diário Atual", type="primary", use_container_width=True):
+                # Sorteia um número com uma casa decimal de 0.1 até 1.0
+                taxa_sorteada = round(random.uniform(0.1, 1.0), 2)
+                
+                # Executa a atualização em lote direto no banco
+                banco.aplicar_rendimento_diario(taxa_sorteada)
+                
+                st.success(f"🎉 Sucesso! Rendimento diário de **{taxa_sorteada}%** foi aplicado e salvo no saldo de todos os clientes!")
+                time.sleep(2)
+                st.rerun()
