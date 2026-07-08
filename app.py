@@ -1,25 +1,19 @@
 import streamlit as st
 import time
+import banco  # NOVO: Importa nosso arquivo de banco de dados permanente
 
 # 1. INICIALIZAÇÃO DE VARIÁVEIS DO SISTEMA
 if "tela_atual" not in st.session_state:
     st.session_state.tela_atual = "tela_1"
-if "usuarios_cadastrados" not in st.session_state:
-    st.session_state.usuarios_cadastrados = {}  
 if "usuario_logado" not in st.session_state:
     st.session_state.usuario_logado = None
 if "admin_logado" not in st.session_state:
-    st.session_state.admin_logado = False  # NOVO: Controla o acesso de segurança do admin
+    st.session_state.admin_logado = False  
 if "plano_selecionado" not in st.session_state:
     st.session_state.plano_selecionado = None
 if "valor_selecionado" not in st.session_state:
     st.session_state.valor_selecionado = 0.0
-if "historico_aportes" not in st.session_state:
-    st.session_state.historico_aportes = []  
-if "historico_saques" not in st.session_state:
-    st.session_state.historico_saques = []    
 
-# Definição da senha mestre do Administrador
 SENHA_MESTRE_ADMIN = "admin123"
 
 PLANOS = {
