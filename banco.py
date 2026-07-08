@@ -158,3 +158,18 @@ def aprovar_saque(id_saque, cpf, valor):
 
 # Inicializa as tabelas automaticamente ao importar o arquivo
 inicializar_banco()
+
+def aplicar_rendimento_diario(porcentagem):
+    """Aplica o rendimento diário sobre o saldo de todos os usuários aprovados."""
+    conn = conectar()
+    cursor = conn.cursor()
+    # Multiplica o saldo atual pelo rendimento (ex: se render 1%, multiplica por 1.01)
+    fator_multiplicador = 1 + (porcentagem / 100)
+    cursor.execute("""
+        UPDATE usuarios 
+        SET saldo = saldo * ? 
+        WHERE status = 'Aprovado' AND saldo > 0
+    """, (fator_multiplicador,))
+    conn.commit()
+    conn.close()
+
