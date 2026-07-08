@@ -164,7 +164,7 @@ elif st.session_state.tela_atual == "tela_4":
     if st.button("← Mudar de Plano"):
         navegar_para("tela_3")
 
-# --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7 + RENDIMENTOS) ---
+# --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7 + RENDIMENTOS MANUAIS) ---
 elif st.session_state.tela_atual == "tela_admin":
     st.title("🛠️ Painel Administrativo Geral")
     
@@ -195,9 +195,8 @@ elif st.session_state.tela_atual == "tela_admin":
                 navegar_para("tela_1")
                 
         st.markdown("---")
-        # Adicionada a aba de Rendimentos
         aba_tela5, aba_tela6, aba_tela7, aba_rendimentos = st.tabs([
-            "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques", "📈 Rendimentos"
+            "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques", "📈 Rendimentos Individuais"
         ])
         
         with aba_tela5:
@@ -246,19 +245,33 @@ elif st.session_state.tela_atual == "tela_admin":
                             time.sleep(1)
                             st.rerun()
 
-        # NOVO: Tela de rodar os rendimentos do dia
+        # MODIFICADO: Lançamento manual por investidor
         with aba_rendimentos:
-            st.subheader("Distribuição de Lucros Diários")
-            st.write("Clique no botão abaixo para rodar o algoritmo de rendimento do dia útil. O sistema vai aplicar uma taxa aleatória entre **0,1% e 1,0%** no saldo de todos os investidores ativos.")
+            st.subheader("Lançamento Manual de Rendimentos")
+            st.write("Selecione o investidor na lista abaixo e informe a porcentagem de lucro a ser aplicada sobre o saldo dele.")
             
-            import random
-            if st.button("🚀 Rodar Rendimento Diário Atual", type="primary", use_container_width=True):
-                # Sorteia um número com uma casa decimal de 0.1 até 1.0
-                taxa_sorteada = round(random.uniform(0.1, 1.0), 2)
-                
-                # Executa a atualização em lote direto no banco
-                banco.aplicar_rendimento_diario(taxa_sorteada)
-                
-                st.success(f"🎉 Sucesso! Rendimento diário de **{taxa_sorteada}%** foi aplicado e salvo no saldo de todos os clientes!")
-                time.sleep(2)
-                st.rerun()
+            usuarios_ativos = banco.listar_usuarios_ativos()
+            
+            if not usuarios_ativos:
+                st.info("Nenhum investidor ativo e aprovado com saldo no momento.")
+            else:
+                for usr in usuarios_ativos:
+                    saldo_formatado = f"R$ {usr['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    with st.expander(f"👤 {usr['nome']} (Plano: {usr['plano_ativo']} | Saldo Atual: {saldo_formatado})"):
+                        st.write(f"**CPF:** {usr['cpf']}")
+                        
+                        # Campo numérico para digitar a taxa de lucro de 0.1% a 1.0% (ou mais se desejar)
+                        taxa_manual = st.number_input(
+                            f"Porcentagem de Rendimento para {usr['nome']} (%)",
+                            min_value=0.01,
+                            max_value=10.0,
+                            value=0.5,
+                            step=0.01,
+                            key=f"taxa_{usr['cpf']}"
+                        )
+                        
+                        if st.button(f"Lançar Rendimento para {usr['nome']}", key=f"btn_rend_{usr['cpf']}", type="primary"):
+                            banco.aplicar_rendimento_manual(usr['cpf'], taxa_manual)
+                            st.success(f"🎉 Sucesso! Rendimento de {taxa_manual}% aplicado ao saldo de {usr['nome']}!")
+                            time.sleep(1.5)
+                            st.rerun()
