@@ -98,3 +98,66 @@ elif st.session_state.tela_atual == "tela_2":
     st.markdown("---")
     if st.button("← Voltar para a Tela Inicial"):
         navegar_para("tela_1")
+
+
+# ==========================================
+# TELA 3: INFORMA OS APORTES
+# ==========================================
+elif st.session_state.tela_atual == "tela_3":
+    cpf = st.session_state.usuario_logado
+    nome_usuario = st.session_state.usuarios_cadastrados[cpf]["nome"] if cpf else "Usuário"
+    
+    st.title("📥 Escolha seu Plano de Aporte")
+    st.subheader(f"Seja bem-vindo, {nome_usuario}. Selecione abaixo o valor que deseja aportar:")
+    
+    st.markdown("---")
+    
+    # Cria colunas visuais para exibir os planos organizados
+    for nome_plano, valor_plano in PLANOS.items():
+        col_info, col_botao = st.columns([3, 1])
+        with col_info:
+            st.write(f"🔹 **Plano {nome_plano}** — Valor único de Investimento:")
+            st.subheader(f"R$ {valor_plano:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        with col_botao:
+            st.write("") # Apenas espaçamento
+            if st.button(f"Escolher {nome_plano}", key=f"btn_{nome_plano}", type="primary"):
+                st.session_state.plano_selecionado = nome_plano
+                st.session_state.valor_selecionado = valor_plano
+                navegar_para("tela_4")
+        st.markdown("---")
+        
+    if st.button("← Sair / Voltar"):
+        st.session_state.usuario_logado = None
+        navegar_para("tela_1")
+
+
+# ==========================================
+# TELA 4: TELA DE PAGAMENTO VIA PIX
+# ==========================================
+elif st.session_state.tela_atual == "tela_4":
+    st.title("💸 Pagamento do Aporte")
+    
+    plano = st.session_state.plano_selecionado
+    valor = st.session_state.valor_selecionado
+    
+    st.subheader(f"Você escolheu o plano **{plano}**")
+    st.info(f"Valor a pagar: **R$ {valor:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+    
+    st.write("Escaneie o QR Code abaixo pelo aplicativo do seu banco ou utilize a chave Copia e Cola:")
+    
+    # Gera uma imagem demonstrativa de QR Code
+    st.image("https://qrserver.com", width=250)
+    
+    # Texto simulação de cópia e cola
+    chave_copia_cola = f"00020101021126330014br.gov.bcb.pix0111123456789015204000053039865405{int(valor)}005802BR5913SISTEMA_APORT6009SAO_PAULO62070503***6304"
+    st.text_area("Chave Pix Copia e Cola:", value=chave_copia_cola, height=90)
+    
+    st.markdown("---")
+    
+    if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True):
+        st.success("✅ Pagamento enviado para validação! No próximo passo faremos as telas do Administrador para aprovar este pedido.")
+        time.sleep(3)
+        navegar_para("tela_3")
+        
+    if st.button("← Mudar de Plano"):
+        navegar_para("tela_3")
