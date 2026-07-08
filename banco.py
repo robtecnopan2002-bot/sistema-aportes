@@ -1,0 +1,160 @@
+import sqlite3
+
+DB_NAME = "sistema_financeiro.db"
+
+def conectar():
+    """Conecta ao banco de dados SQLite."""
+    return sqlite3.connect(DB_NAME)
+
+def inicializar_banco():
+    """Cria as tabelas necessárias se elas não existirem."""
+    conn = conectar()
+    cursor = conn.cursor()
+    
+    # Tabela de Usuários (Tela 2)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            cpf TEXT PRIMARY KEY,
+            nome TEXT NOT NULL,
+            telefone TEXT,
+            cep TEXT,
+            email TEXT,
+            senha TEXT NOT NULL,
+            status TEXT DEFAULT 'Pendente',
+            saldo REAL DEFAULT 0.0,
+            plano_ativo TEXT DEFAULT 'Nenhum'
+        )
+    """)
+    
+    # Tabela de Aportes (Telas 4 e 6)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS aportes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cpf TEXT,
+            nome TEXT,
+            plano TEXT,
+            valor REAL,
+            status TEXT DEFAULT 'Pendente',
+            FOREIGN KEY (cpf) REFERENCES usuarios (cpf)
+        )
+    """)
+    
+    # Tabela de Saques (Telas 3 e 7)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS saques (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cpf TEXT,
+            nome TEXT,
+            valor REAL,
+            chave_pix TEXT,
+            status TEXT DEFAULT 'Pendente',
+            FOREIGN KEY (cpf) REFERENCES usuarios (cpf)
+        )
+    """)
+    
+    conn.commit()
+    conn.close()
+
+# --- FUNÇÕES DE USUÁRIOS ---
+def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO usuarios (nome, cpf, telefone, cep, email, senha, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'Pendente')
+        """, (nome, cpf, telefone, cep, email, senha))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        return False  # CPF já existe
+
+def obter_usuario(cpf):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, status, saldo, plano_ativo FROM usuarios WHERE cpf = ?", (cpf,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {
+            "nome": row[0], "cpf": row[1], "telefone": row[2], "cep": row[3],
+            "email": row[4], "senha": row[5], "status": row[6], "saldo": row[7], "plano_ativo": row[8]
+        }
+    return None
+
+def listar_usuarios_pendentes():
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT nome, cpf, telefone, cep, email FROM usuarios WHERE status = 'Pendente'")
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"nome": r[0], "cpf": r[1], "telefone": r[2], "cep": r[3], "email": r[4]} for r in rows]
+
+def aprovar_usuario(cpf):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usuarios SET status = 'Aprovado' WHERE cpf = ?", (cpf,))
+    conn.commit()
+    conn.close()
+
+# --- FUNÇÕES DE APORTES ---
+def solicitar_aporte(cpf, nome, plano, valor):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO aportes (cpf, nome, plano, valor, status)
+        VALUES (?, ?, ?, ?, 'Pendente')
+    """, (cpf, nome, plano, valor))
+    conn.commit()
+    conn.close()
+
+def listar_aportes_pendentes():
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, cpf, nome, plano, valor FROM aportes WHERE status = 'Pendente'")
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id_aporte": r[0], "cpf": r[1], "nome": r[2], "plano": r[3], "valor": r[4]} for r in rows]
+
+def aprovar_aporte(id_aporte, cpf, valor, plano):
+    conn = conectar()
+    cursor = conn.cursor()
+    # Atualiza o aporte para aprovado
+    cursor.execute("UPDATE aportes SET status = 'Aprovado' WHERE id = ?", (id_aporte,))
+    # Atualiza o saldo e o plano ativo do usuário
+    cursor.execute("UPDATE usuarios SET saldo = saldo + ?, plano_ativo = ? WHERE cpf = ?", (valor, plano, cpf))
+    conn.commit()
+    conn.close()
+
+# --- FUNÇÕES DE SAQUES ---
+def solicitar_saque(cpf, nome, valor, chave_pix):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO saques (cpf, nome, valor, chave_pix, status)
+        VALUES (?, ?, ?, ?, 'Pendente')
+    """, (cpf, nome, valor, chave_pix))
+    conn.commit()
+    conn.close()
+
+def listar_saques_pendentes():
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, cpf, nome, valor, chave_pix FROM saques WHERE status = 'Pendente'")
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id_saque": r[0], "cpf": r[1], "nome": r[2], "valor": r[3], "chave_pix": r[4]} for r in rows]
+
+def aprovar_saque(id_saque, cpf, valor):
+    conn = conectar()
+    cursor = conn.cursor()
+    # Atualiza o saque para concluído
+    cursor.execute("UPDATE saques SET status = 'Concluído' WHERE id = ?", (id_saque,))
+    # Deduz o valor do saldo do usuário
+    cursor.execute("UPDATE usuarios SET saldo = saldo - ? WHERE cpf = ?", (valor, cpf))
+    conn.commit()
+    conn.close()
+
+# Inicializa as tabelas automaticamente ao importar o arquivo
+inicializar_banco()
