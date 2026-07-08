@@ -8,6 +8,8 @@ if "usuarios_cadastrados" not in st.session_state:
     st.session_state.usuarios_cadastrados = {}  
 if "usuario_logado" not in st.session_state:
     st.session_state.usuario_logado = None
+if "admin_logado" not in st.session_state:
+    st.session_state.admin_logado = False  # NOVO: Controla o acesso de segurança do admin
 if "plano_selecionado" not in st.session_state:
     st.session_state.plano_selecionado = None
 if "valor_selecionado" not in st.session_state:
@@ -16,6 +18,9 @@ if "historico_aportes" not in st.session_state:
     st.session_state.historico_aportes = []  
 if "historico_saques" not in st.session_state:
     st.session_state.historico_saques = []    
+
+# Definição da senha mestre do Administrador
+SENHA_MESTRE_ADMIN = "admin123"
 
 PLANOS = {
     "Cobre": 300.00,
@@ -171,59 +176,87 @@ elif st.session_state.tela_atual == "tela_4":
 # --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7) ---
 elif st.session_state.tela_atual == "tela_admin":
     st.title("🛠️ Painel Administrativo Geral")
-    if st.button("← Voltar para a Home Principal"):
-        navegar_para("tela_1")
-    st.markdown("---")
     
-    aba_tela5, aba_tela6, aba_tela7 = st.tabs([
-        "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques"
-    ])
-    
-    with aba_tela5:
-        st.subheader("Novos clientes aguardando autorização")
-        clientes_pendentes = [u for u in st.session_state.usuarios_cadastrados.values() if u["status"] == "Pendente"]
-        if not clientes_pendentes:
-            st.info("Nenhum cadastro pendente.")
-        else:
-            for cl in clientes_pendentes:
-                with st.expander(f"📋 Cadastro de: {cl['nome']}"):
-                    st.write(f"**CPF:** {cl['cpf']} | **Tel:** {cl['telefone']} | **CEP:** {cl['cep']}")
-                    if st.button(f"Aprovar {cl['nome']}", key=f"aceite_{cl['cpf']}", type="primary"):
-                        st.session_state.usuarios_cadastrados[cl['cpf']]["status"] = "Aprovado"
-                        st.success("Cliente liberado!")
-                        time.sleep(1)
-                        st.rerun()
+    # Se o administrador NÃO estiver logado, exibe a tela de login de segurança
+    if not st.session_state.admin_logado:
+        st.subheader("🔒 Acesso Restrito")
+        senha_admin = st.text_input("Digite a senha master do sistema", type="password", key="input_senha_admin")
+        
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            if st.button("Verificar Senha", type="primary", use_container_width=True):
+                if senha_admin == SENHA_MESTRE_ADMIN:
+                    st.session_state.admin_logado = True
+                    st.success("Acesso autorizado!")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Senha incorreta! Acesso negado.")
+        with col_b2:
+            if st.button("← Voltar para a Home", type="secondary", use_container_width=True):
+                navegar_para("tela_1")
+                
+    # Se o administrador JÁ estiver logado com sucesso, libera as Telas 5, 6 e 7
+    else:
+        col_logout_admin1, col_logout_admin2 = st.columns([3, 1])
+        with col_logout_admin1:
+            st.write("Gerencie os acessos, valide pagamentos e autorize os saques dos investidores.")
+        with col_logout_admin2:
+            if st.button("🔒 Sair do Painel Admin", type="secondary", use_container_width=True):
+                st.session_state.admin_logado = False
+                navegar_para("tela_1")
+                
+        st.markdown("---")
+        
+        aba_tela5, aba_tela6, aba_tela7 = st.tabs([
+            "👥 Tela 5: Aceite de Cadastros", "💰 Tela 6: Autorizar Aportes", "💳 Tela 7: Autorizar Saques"
+        ])
+        
+        with aba_tela5:
+            st.subheader("Novos clientes aguardando autorização")
+            clientes_pendentes = [u for u in st.session_state.usuarios_cadastrados.values() if u["status"] == "Pendente"]
+            if not clientes_pendentes:
+                st.info("Nenhum cadastro pendente.")
+            else:
+                for cl in clientes_pendentes:
+                    with st.expander(f"📋 Cadastro de: {cl['nome']}"):
+                        st.write(f"**CPF:** {cl['cpf']} | **Tel:** {cl['telefone']} | **CEP:** {cl['cep']}")
+                        if st.button(f"Aprovar {cl['nome']}", key=f"aceite_{cl['cpf']}", type="primary"):
+                            st.session_state.usuarios_cadastrados[cl['cpf']]["status"] = "Aprovado"
+                            st.success("Cliente liberado!")
+                            time.sleep(1)
+                            st.rerun()
 
-    with aba_tela6:
-        st.subheader("Aportes solicitados por PIX")
-        aportes_pendentes = [a for a in st.session_state.historico_aportes if a["status"] == "Pendente"]
-        if not aportes_pendentes:
-            st.info("Nenhum pagamento pendente.")
-        else:
-            for ap in aportes_pendentes:
-                with st.expander(f"💸 Aporte #{ap['id_aporte']} - {ap['nome']}"):
-                    st.write(f"**Plano:** {ap['plano']} | **Valor:** R$ {ap['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                    if st.button(f"Confirmar PIX", key=f"conf_ap_{ap['id_aporte']}", type="primary"):
-                        ap["status"] = "Aprovado"
-                        st.session_state.usuarios_cadastrados[ap['cpf']]["saldo"] += ap['valor']
-                        st.session_state.usuarios_cadastrados[ap['cpf']]["plano_ativo"] = ap['plano']
-                        st.success("Saldo inserido!")
-                        time.sleep(1)
-                        st.rerun()
+        with aba_tela6:
+            st.subheader("Aportes solicitados por PIX")
+            aportes_pendentes = [a for a in st.session_state.historico_aportes if a["status"] == "Pendente"]
+            if not aportes_pendentes:
+                st.info("Nenhum pagamento pendente.")
+            else:
+                for ap in aportes_pendentes:
+                    with st.expander(f"💸 Aporte #{ap['id_aporte']} - {ap['nome']}"):
+                        st.write(f"**Plano:** {ap['plano']} | **Valor:** R$ {ap['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                        if st.button(f"Confirmar PIX", key=f"conf_ap_{ap['id_aporte']}", type="primary"):
+                            ap["status"] = "Aprovado"
+                            st.session_state.usuarios_cadastrados[ap['cpf']]["saldo"] += ap['valor']
+                            st.session_state.usuarios_cadastrados[ap['cpf']]["plano_ativo"] = ap['plano']
+                            st.success("Saldo inserido!")
+                            time.sleep(1)
+                            st.rerun()
 
-    with aba_tela7:
-        st.subheader("Pedidos de Resgate de Lucros")
-        saques_pendentes = [s for s in st.session_state.historico_saques if s["status"] == "Pendente"]
-        if not saques_pendentes:
-            st.info("Não existem saques aguardando autorização.")
-        else:
-            for sq in saques_pendentes:
-                with st.expander(f"💳 Saque #{sq['id_saque']} - {sq['nome']}"):
-                    st.write(f"**Valor:** R$ {sq['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                    st.write(f"**Chave PIX:** {sq['chave_pix']}")
-                    if st.button(f"Liquidar Saque", key=f"conf_sq_{sq['id_saque']}", type="primary"):
-                        sq["status"] = "Concluído"
-                        st.session_state.usuarios_cadastrados[sq['cpf']]["saldo"] -= sq['valor']
-                        st.success("Saque autorizado e debitado!")
-                        time.sleep(1)
-                        st.rerun()
+        with aba_tela7:
+            st.subheader("Pedidos de Resgate de Lucros")
+            saques_pendentes = [s for s in st.session_state.historico_saques if s["status"] == "Pendente"]
+            if not saques_pendentes:
+                st.info("Não existem saques aguardando autorização.")
+            else:
+                for sq in saques_pendentes:
+                    with st.expander(f"💳 Saque #{sq['id_saque']} - {sq['nome']}"):
+                        st.write(f"**Valor:** R$ {sq['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                        st.write(f"**Chave PIX:** {sq['chave_pix']}")
+                        if st.button(f"Liquidar Saque", key=f"conf_sq_{sq['id_saque']}", type="primary"):
+                            sq["status"] = "Concluído"
+                            st.session_state.usuarios_cadastrados[sq['cpf']]["saldo"] -= sq['valor']
+                            st.success("Saque autorizado e debitado!")
+                            time.sleep(1)
+                            st.rerun()
