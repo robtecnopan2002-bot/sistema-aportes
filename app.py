@@ -1,4 +1,4 @@
-pythonimport streamlit as st
+import streamlit as st
 import time
 
 # 1. INICIALIZAÇÃO DE VARIÁVEIS DO SISTEMA
@@ -8,6 +8,19 @@ if "usuarios_cadastrados" not in st.session_state:
     st.session_state.usuarios_cadastrados = {}  # Guarda os cadastros usando o CPF como chave
 if "usuario_logado" not in st.session_state:
     st.session_state.usuario_logado = None
+if "plano_selecionado" not in st.session_state:
+    st.session_state.plano_selecionado = None
+if "valor_selecionado" not in st.session_state:
+    st.session_state.valor_selecionado = 0.0
+
+# Dicionário com os valores dos planos da Tela 3
+PLANOS = {
+    "Cobre": 300.00,
+    "Bronze": 600.00,
+    "Prata": 1000.00,
+    "Ouro": 3000.00,
+    "Diamante": 5000.00
+}
 
 # Função auxiliar para trocar de tela
 def navegar_para(nova_tela):
@@ -41,7 +54,6 @@ if st.session_state.tela_atual == "tela_1":
 elif st.session_state.tela_atual == "tela_2":
     st.title("🔐 Área de Acesso")
     
-    # Criando abas para separar o Login do Cadastro
     aba_login, aba_cadastro = st.tabs(["Já tenho conta (Login)", "Quero me cadastrar"])
     
     # --- FLUXO DE LOGIN ---
@@ -57,8 +69,7 @@ elif st.session_state.tela_atual == "tela_2":
                     st.session_state.usuario_logado = login_cpf
                     st.success(f"Bem-vindo(a), {usuario['nome']}!")
                     time.sleep(1)
-                    # Por enquanto, mostramos apenas uma mensagem de sucesso
-                    st.info("Sucesso! No próximo passo faremos a Tela 3 (Aportes).")
+                    navegar_para("tela_3")
                 else:
                     st.error("Senha incorreta. Tente novamente.")
             else:
@@ -76,13 +87,11 @@ elif st.session_state.tela_atual == "tela_2":
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
         
         if st.button("Finalizar Meu Cadastro", type="secondary"):
-            # Validação simples se todos os campos foram preenchidos
             if not (cad_nome and cad_cpf and cad_tel and cad_cep and cad_email and cad_senha):
                 st.error("⚠️ Por favor, preencha todos os campos obrigatórios.")
             elif cad_cpf in st.session_state.usuarios_cadastrados:
                 st.warning("⚠️ Este CPF já está registrado em nossa base.")
             else:
-                # Salva o novo usuário no dicionário em memória
                 st.session_state.usuarios_cadastrados[cad_cpf] = {
                     "nome": cad_nome,
                     "cpf": cad_cpf,
@@ -90,11 +99,10 @@ elif st.session_state.tela_atual == "tela_2":
                     "cep": cad_cep,
                     "email": cad_email,
                     "senha": cad_senha,
-                    "status": "Pendente" # Será usado na tela do administrador depois
+                    "status": "Pendente"
                 }
                 st.success("✅ Cadastro realizado com sucesso! Agora você já pode fazer login na aba ao lado.")
                 
-    # Botão de segurança para voltar
     st.markdown("---")
     if st.button("← Voltar para a Tela Inicial"):
         navegar_para("tela_1")
@@ -112,14 +120,13 @@ elif st.session_state.tela_atual == "tela_3":
     
     st.markdown("---")
     
-    # Cria colunas visuais para exibir os planos organizados
     for nome_plano, valor_plano in PLANOS.items():
         col_info, col_botao = st.columns([3, 1])
         with col_info:
             st.write(f"🔹 **Plano {nome_plano}** — Valor único de Investimento:")
             st.subheader(f"R$ {valor_plano:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         with col_botao:
-            st.write("") # Apenas espaçamento
+            st.write("") 
             if st.button(f"Escolher {nome_plano}", key=f"btn_{nome_plano}", type="primary"):
                 st.session_state.plano_selecionado = nome_plano
                 st.session_state.valor_selecionado = valor_plano
@@ -145,10 +152,8 @@ elif st.session_state.tela_atual == "tela_4":
     
     st.write("Escaneie o QR Code abaixo pelo aplicativo do seu banco ou utilize a chave Copia e Cola:")
     
-    # Gera uma imagem demonstrativa de QR Code
     st.image("https://qrserver.com", width=250)
     
-    # Texto simulação de cópia e cola
     chave_copia_cola = f"00020101021126330014br.gov.bcb.pix0111123456789015204000053039865405{int(valor)}005802BR5913SISTEMA_APORT6009SAO_PAULO62070503***6304"
     st.text_area("Chave Pix Copia e Cola:", value=chave_copia_cola, height=90)
     
