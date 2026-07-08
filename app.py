@@ -109,7 +109,7 @@ elif st.session_state.tela_atual == "tela_3":
     
     with tab_fazer_aporte:
         for nome_plano, valor_plano in PLANOS.items():
-            col_info, col_botao = st.columns()
+            col_info, col_botao = st.columns(2)  # CORRIGIDO: Passado o número 2 explicitamente
             with col_info:
                 st.write(f"🔹 **Plano {nome_plano}** — Valor único:")
                 st.subheader(f"R$ {valor_plano:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
