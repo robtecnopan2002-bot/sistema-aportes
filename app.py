@@ -255,19 +255,29 @@ elif st.session_state.tela_atual == "tela_4":
     user_cliente = banco.obter_usuario(cpf_cliente)
     nome_cliente = user_cliente["nome"]
     
+    # 1. GERADOR DINÂMICO DE PIX DA SUA CONTA (Calculado Primeiro)
+    minha_chave_real = st.secrets.get("CHAVE_PIX_RECEBIMENTO", "suachave@exemplo.com")
+    tamanho_chave = f"{len(minha_chave_real):02d}"
+    valor_formatado = f"{valor:.2f}"
+    tamanho_valor = f"{len(valor_formatado):02d}"
+    
+    chave_copia_cola = f"00020101021126330014br.gov.bcb.pix01{tamanho_chave}{minha_chave_real}52040000530398654{tamanho_valor}{valor_formatado}5802BR5911RCB_APORTES6009SAO_PAULO62070503***6304"
+    
+    # 2. EXIBIÇÃO DOS TEXTOS E COMPONENTES VISUAIS
     st.subheader(f"Você escolheu o plano **{plano}**")
     st.info(f"Valor a pagar: **R$ {valor:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     st.write("Escaneie o QR Code abaixo usando o aplicativo do seu banco:")
     
-    # --- GERADOR AUTOMÁTICO DE QR CODE REAL (PASSO 4) ---
+    # 3. GERADOR AUTOMÁTICO DE QR CODE REAL (Usa a chave já calculada acima)
     import urllib.parse
-    # Codifica a string do Pix de forma segura para a URL da imagem
     string_pix_codificada = urllib.parse.quote(chave_copia_cola)
     link_qr_code_real = f"https://qrserver.com{string_pix_codificada}"
     
-    # Exibe o QR Code real gerado na hora
     st.image(link_qr_code_real, width=250)
-    # ----------------------------------------------------
+    
+    st.text_area("Chave Pix Copia e Cola (Clique para copiar e pagar):", value=chave_copia_cola, height=90)
+    st.markdown("---")
+
 
     
     # --- GERADOR DINÂMICO DE PIX DA SUA CONTA (PASSO 4) ---
