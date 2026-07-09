@@ -97,13 +97,10 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cep = st.text_input("CEP", key="reg_cep")
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
-            if st.button("Finalizar Meu Cadastro", type="secondary"):
-            # 1. Limpeza dos dados para validação numérica
+        if st.button("Finalizar Meu Cadastro", type="secondary"):
             cpf_limpo = "".join(filter(str.isdigit, cad_cpf))
             tel_limpo = "".join(filter(str.isdigit, cad_tel))
             cep_limpo = "".join(filter(str.isdigit, cad_cep))
-
-            # 2. Execução dos testes de validação do Passo 4
             if not (cad_nome and cad_cpf and cad_tel and cad_cep and cad_email and cad_senha):
                 st.error("⚠️ Preencha todos os campos obrigatórios.")
             elif len(cpf_limpo) != 11:
@@ -117,12 +114,12 @@ elif st.session_state.tela_atual == "tela_2":
             elif len(cad_senha) < 6:
                 st.error("❌ Senha muito curta. Crie uma senha com no mínimo 6 caracteres.")
             else:
-                # Se passar em todas as validações, envia os dados limpos para o banco
                 sucesso = banco.cadastrar_usuario(cad_nome, cpf_limpo, tel_limpo, cep_limpo, cad_email, cad_senha)
                 if sucesso:
                     st.success("✅ Cadastro realizado com sucesso! Aguarde o aceite do administrador no painel.")
                 else:
                     st.warning("⚠️ Este CPF já está registrado no sistema.")
+
 
 
                 
