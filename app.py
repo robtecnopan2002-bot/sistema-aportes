@@ -257,8 +257,18 @@ elif st.session_state.tela_atual == "tela_4":
     
     st.subheader(f"Você escolheu o plano **{plano}**")
     st.info(f"Valor a pagar: **R$ {valor:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-    st.write("Escaneie o QR Code ou utilize a chave Copia e Cola:")
-    st.image("https://qrserver.com", width=250)
+    st.write("Escaneie o QR Code abaixo usando o aplicativo do seu banco:")
+    
+    # --- GERADOR AUTOMÁTICO DE QR CODE REAL (PASSO 4) ---
+    import urllib.parse
+    # Codifica a string do Pix de forma segura para a URL da imagem
+    string_pix_codificada = urllib.parse.quote(chave_copia_cola)
+    link_qr_code_real = f"https://qrserver.com{string_pix_codificada}"
+    
+    # Exibe o QR Code real gerado na hora
+    st.image(link_qr_code_real, width=250)
+    # ----------------------------------------------------
+
     
     # --- GERADOR DINÂMICO DE PIX DA SUA CONTA (PASSO 4) ---
     minha_chave_real = st.secrets.get("CHAVE_PIX_RECEBIMENTO", "suachave@exemplo.com")
