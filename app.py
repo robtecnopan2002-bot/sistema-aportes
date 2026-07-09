@@ -48,11 +48,11 @@ def navegar_para(nova_tela):
 
 # --- TELA 1: VISUALIZAÇÃO DO PRODUTO ---
 if st.session_state.tela_atual == "tela_1":
-    # Cabeçalho RCB Aportes estilizado
-    st.markdown('<p class="titulo-logo">RCB</p>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitulo-logo">APORTES</p>', unsafe_allow_html=True)
+    # NOVA LINHA: Adiciona o logotipo centralizado com tamanho ideal de 300 pixels
+    st.image("https://githubusercontent.com", width=300)
     
     st.subheader("Multiplique seu capital diariamente")
+
     st.markdown("---")
     st.metric(label="📊 Lucros Diários Estimados", value="0,1% a 1,0% ao dia")
     st.write("Nosso produto financeiro oferece rendimentos consistentes todos os dias diretamente na sua conta.")
