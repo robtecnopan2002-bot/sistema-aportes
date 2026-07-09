@@ -81,39 +81,41 @@ def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
 
 def obter_usuario(cpf):
     conn = conectar()
-    # Ativa o mapeamento por nome de coluna nativo do SQLite
+    # Ativa o mapeamento oficial por nomes de colunas
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
+    # 1. Garante que a coluna rendimento exista antes de fazer a busca
     try:
-        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
-        linha = cursor.fetchone()
-    except sqlite3.OperationalError:
-        try:
-            cursor.execute("ALTER TABLE usuarios ADD COLUMN rendimento REAL DEFAULT 0.0;")
-            conn.commit()
-        except Exception:
-            pass
-        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
-        linha = cursor.fetchone()
-        
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN rendimento REAL DEFAULT 0.0;")
+        conn.commit()
+    except Exception:
+        pass
+
+    # 2. Faz a busca geral na tabela de usuários
+    cursor.execute("SELECT * FROM usuarios WHERE cpf = ?", (cpf,))
+    linha = cursor.fetchone()
     conn.close()
     
     if linha:
-        # Transforma o retorno em um dicionário amigável usando os nomes das colunas do banco
+        # Transforma o retorno em um dicionário puro do Python
         dados = dict(linha)
+        
+        # Converte os saldos para números reais de forma garantida
+        saldo_limpo = float(dados.get("saldo", 0.0) if dados.get("saldo") is not None else 0.0)
+        rend_limpo = float(dados.get("rendimento", 0.0) if dados.get("rendimento") is not None else 0.0)
+        
         return {
-            "nome": dados.get("nome", ""),
-            "cpf": dados.get("cpf", ""),
-            "telefone": dados.get("telefone", ""),
-            "cep": dados.get("cep", ""),
-            "email": dados.get("email", ""),
-            "senha": dados.get("senha", ""),
-            "saldo": float(dados.get("saldo", 0.0) if dados.get("saldo") is not None else 0.0),
-            "status": dados.get("status", ""),
-            "plano_ativo": dados.get("plano_ativo", "Nenhum"),
-            # Puxa diretamente pelo nome da coluna 'rendimento' gravada no banco
-            "rendimento": float(dados.get("rendimento", 0.0) if dados.get("rendimento") is not None else 0.0)
+            "nome": str(dados.get("nome", "")),
+            "cpf": str(dados.get("cpf", "")),
+            "telefone": str(dados.get("telefone", "")),
+            "cep": str(dados.get("cep", "")),
+            "email": str(dados.get("email", "")),
+            "senha": str(dados.get("senha", "")),
+            "saldo": saldo_limpo,
+            "status": str(dados.get("status", "")),
+            "plano_ativo": str(dados.get("plano_ativo", "Nenhum")),
+            "rendimento": rend_limpo
         }
     return None
 
