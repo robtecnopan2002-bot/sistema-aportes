@@ -34,7 +34,7 @@ st.markdown(
     div.stButton > button:first-child:hover { background-color: #94763E; color: #FFFFFF; border: none; }
     </style>
     """,
-    unsafe_replace_html=True
+    unsafe_allow_html=True
 )
 def navegar_para(nova_tela):
     st.session_state.tela_atual = nova_tela
