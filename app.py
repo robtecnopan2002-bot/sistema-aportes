@@ -97,7 +97,7 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cep = st.text_input("CEP", key="reg_cep")
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
-             if st.button("Finalizar Meu Cadastro", type="secondary"):
+            if st.button("Finalizar Meu Cadastro", type="secondary"):
             # 1. Limpeza dos dados para validação numérica
             cpf_limpo = "".join(filter(str.isdigit, cad_cpf))
             tel_limpo = "".join(filter(str.isdigit, cad_tel))
