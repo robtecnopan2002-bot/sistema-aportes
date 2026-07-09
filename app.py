@@ -298,8 +298,8 @@ elif st.session_state.tela_atual == "tela_admin":
         
         if not usuarios_pendentes:
             st.info("Não há novos cadastros aguardando aprovação no momento.")
+        
         else:
-                    else:
             st.markdown("### 📋 Novos clientes aguardando autorização")
             
             for usr in usuarios_pendentes:
