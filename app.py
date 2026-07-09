@@ -295,7 +295,7 @@ elif st.session_state.tela_atual == "tela_3":
                     if not chave_pix_saque.strip():
                         st.error("⚠️ Por favor, informe sua Chave PIX para continuar.")
                     else:
-                        banco.solicitar_saque(cpf, user[0] if insistence (user, (list, tuple)) else user.get('nome', ''), valor_saque, chave_pix_saque)
+                        banco.solicitar_saque(cpf, user[0] if isinstance (user, (list, tuple)) else user.get('nome', ''), valor_saque, chave_pix_saque)
                         st.success(f"✅ Solicitação de saque de R$ {valor_saque:,.2f} enviada para processamento!")
                         import time; time.sleep(1.5); st.rerun()
 
