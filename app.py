@@ -222,14 +222,22 @@ elif st.session_state.tela_atual == "tela_3":
         v_saldo, v_rend, v_plano = 0.0, 0.0, "Nenhum"
     # ----------------------------------------
 
-    # Exibição do cabeçalho principal limpo e sem duplicidades
-    col_s1, col_s2, col_s3 = st.columns(3)
+    # Exibição unificada com o rendimento somando direto no aporte
+    if isinstance(user, dict):
+        v_saldo = float(user.get('saldo', 0.0))
+        v_plano = str(user.get('plano_active', user.get('plano_ativo', 'Nenhum')))
+    elif isinstance(user, (list, tuple)):
+        v_saldo = float(user[6]) if len(user) > 6 else 0.0
+        v_plano = str(user[8]) if len(user) > 8 else "Nenhum"
+    else:
+        v_saldo, v_plano = 0.0, "Nenhum"
+
+    col_s1, col_s2 = st.columns(2)
     with col_s1:
-        st.metric(label="📈 Rendimento Liberado", value=f"R$ {v_rend:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.metric(label="💰 Saldo Total Disponível (Com Rendimentos)", value=f"R$ {v_saldo:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     with col_s2:
-        st.metric(label="🔒 Capital Aportado (Retido)", value=f"R$ {v_saldo:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    with col_s3:
         st.metric(label="📌 Plano Ativo", value=v_plano)
+
 
 
 
