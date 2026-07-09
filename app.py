@@ -205,11 +205,18 @@ elif st.session_state.tela_atual == "tela_3":
     st.title("📥 Painel do Aportador")
     st.subheader(f"Seja bem-vindo(a), {user['nome']}.")
     
-    col_s1, col_s2 = st.columns(2)
+    # Reorganização das métricas para exibir o rendimento separado (Passo 4 - UX)
+    col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
-        st.metric(label="💰 Saldo Total Aportado", value=f"R$ {user['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        # Puxa o rendimento de forma garantida convertendo para número real
+        valor_rendimento = float(user.get('rendimento', 0.0))
+        st.metric(label="📈 Rendimento Liberado", value=f"R$ {valor_rendimento:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     with col_s2:
-        st.metric(label="📌 Plano de Aporte Ativo", value=user['plano_active'] if 'plano_active' in user else user.get('plano_ativo', 'Nenhum'))
+        valor_saldo = float(user.get('saldo', 0.0))
+        st.metric(label="🔒 Capital Aportado (Retido)", value=f"R$ {valor_saldo:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    with col_s3:
+        st.metric(label="📌 Plano Ativo", value=user.get('plano_ativo', 'Nenhum'))
+
 
         
     st.markdown("---")
