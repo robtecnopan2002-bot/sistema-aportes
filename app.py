@@ -183,19 +183,20 @@ elif st.session_state.tela_atual == "tela_2":
     if st.button("← Voltar para a Tela Inicial"):
         navegar_para("tela_1")
 
-# --- TELA 3: PAINEL DO INVESTIDOR ---
+# --- TELA 3: PAINEL DO APORTADOR ---
 elif st.session_state.tela_atual == "tela_3":
     cpf = st.session_state.usuario_logado
     # NOVO: Busca dados atualizados do banco
     user = banco.obter_usuario(cpf)
-    st.title("📥 Painel do Investidor")
-    st.subheader(f"Seja bem-vindo, {user['nome']}.")
+    st.title("📥 Painel do Aportador")
+    st.subheader(f"Seja bem-vindo(a), {user['nome']}.")
     
     col_s1, col_s2 = st.columns(2)
     with col_s1:
-        st.metric(label="💰 Seu Saldo Disponível", value=f"R$ {user['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.metric(label="💰 Saldo Total Aportado", value=f"R$ {user['saldo']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     with col_s2:
-        st.metric(label="📌 Plano Ativo", value=user['plano_active'] if 'plano_active' in user else user.get('plano_ativo', 'Nenhum'))
+        st.metric(label="📌 Plano de Aporte Ativo", value=user['plano_active'] if 'plano_active' in user else user.get('plano_ativo', 'Nenhum'))
+
         
     st.markdown("---")
     tab_fazer_aporte, tab_solicitar_saque = st.tabs(["Fazer Novo Aporte", "Solicitar Saque (Resgate)"])
