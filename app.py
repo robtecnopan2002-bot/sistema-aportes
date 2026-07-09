@@ -95,27 +95,35 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA AUTOMÁTICA DE CEP ---
+        # --- BUSCA AUTOMÁTICA DE CEP (CORRIGIDO) ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
-        endereco_auto = ""
         
         cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
+        if "end_salvo" not in st.session_state:
+            st.session_state.end_salvo = ""
+            
         if len(cep_limpo_busca) == 8:
             import urllib.request
             import json
             try:
                 url = f"https://viacep.com.br{cep_limpo_busca}/json/"
-                with urllib.request.urlopen(url) as response:
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req) as response:
                     dados_cep = json.loads(response.read().decode())
                 if "erro" not in dados_cep:
-                    endereco_auto = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('localidade', '')}/{dados_cep.get('uf', '')}"
-                    st.info(f"📍 **Endereço Encontrado:** {endereco_auto}")
+                    st.session_state.end_salvo = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('localidade', '')}/{dados_cep.get('uf', '')}"
+                    st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
                 else:
-                    st.error("❌ CEP não encontrado na base de dados.")
+                    st.error("❌ CEP não encontrado.")
+                    st.session_state.end_salvo = ""
             except:
-                pass
-        # -------------------------------
+                st.error("⚠️ Erro ao buscar CEP. Verifique a conexão.")
+                st.session_state.end_salvo = ""
+        else:
+            st.session_state.end_salvo = ""
+        # --------------------------------------------
 
+    
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
 
