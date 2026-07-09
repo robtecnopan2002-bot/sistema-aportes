@@ -200,8 +200,10 @@ elif st.session_state.tela_atual == "tela_2":
 # --- TELA 3: PAINEL DO APORTADOR ---
 elif st.session_state.tela_atual == "tela_3":
     cpf = st.session_state.usuario_logado
-    # NOVO: Busca dados atualizados do banco
+    # CORREÇÃO DEFINITIVA: Atualiza e unifica a busca do usuário logado no banco
     user = banco.obter_usuario(cpf)
+    usuario = user
+    user_cliente = user
     st.title("📥 Painel do Aportador")
     st.subheader(f"Seja bem-vindo(a), {user['nome']}.")
     
