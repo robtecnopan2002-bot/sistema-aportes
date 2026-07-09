@@ -95,40 +95,56 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA INTELIGENTE DE CEP COM ENTRADA MANUAL DE SEGURANÇA ---
+        # --- BLOCO DE ENDEREÇO SEPARADO EM CAMPOS (PASSO 4) ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
         if "end_salvo" not in st.session_state:
             st.session_state.end_salvo = ""
             
-        col_cep1, col_cep2 = st.columns([1, 1])
+        # Botões de controle visual
+        col_cep1, col_cep2 = st.columns(2)
         with col_cep1:
-            if st.button("🔍 Buscar Endereço", type="secondary", use_container_width=True):
+            if st.button("🔍 Buscar Endereço Automático", type="secondary", use_container_width=True):
                 cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
                 if len(cep_limpo_busca) == 8:
                     import urllib.request
                     import json
                     try:
-                        url = f"https://cep.awesomeapi.com.br/json/{cep_limpo_busca}"
+                        url = f"https://awesomeapi.com.br{cep_limpo_busca}"
                         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
                         with urllib.request.urlopen(req, timeout=4) as response:
                             dados_cep = json.loads(response.read().decode())
                         st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
                     except Exception:
-                        st.session_state.end_salvo = "Liberar Digitação"
+                        st.session_state.end_salvo = "Liberar Campos"
                 else:
                     st.error("Digite 8 números.")
-
+        
         with col_cep2:
-            if st.button("✏️ Digitar Manualmente", type="secondary", use_container_width=True):
-                st.session_state.end_salvo = "Liberar Digitação"
+            if st.button("✏️ Preencher Manualmente", type="secondary", use_container_width=True):
+                st.session_state.end_salvo = "Liberar Campos"
 
-        # Mostra o resultado da busca ou o campo para preenchimento manual
-        if st.session_state.end_salvo == "Liberar Digitação":
-            st.session_state.end_salvo = st.text_input("Digite seu endereço completo (Rua, Número, Bairro, Cidade):", key="input_end_manual")
-        elif st.session_state.end_salvo:
-            st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
-        # -----------------------------------------------------------------
+        # Se a busca automática falhar ou o usuário clicar em manual, abre os campos separados
+        if st.session_state.end_salvo == "Liberar Campos" or not st.session_state.end_salvo:
+            col_end1, col_end2 = st.columns([3, 1])
+            with col_end1:
+                end_rua = st.text_input("Rua / Avenida:", key="input_rua")
+            with col_end2:
+                end_num = st.text_input("Número:", key="input_num")
+                
+            col_end3, col_end4 = st.columns(2)
+            with col_end3:
+                end_bairro = st.text_input("Bairro:", key="input_bairro")
+            with col_end4:
+                end_cidade = st.text_input("Cidade / Estado:", key="input_cidade")
+            
+            # Junta as partes em uma única variável se todas forem preenchidas
+            if end_rua and end_num and end_bairro and end_cidade:
+                st.session_state.end_salvo = f"{end_rua}, {end_num} - {end_bairro}, {end_cidade}"
+        
+        elif st.session_state.end_salvo and st.session_state.end_salvo != "Liberar Campos":
+            st.success(f"📍 **Endereço Localizado:** {st.session_state.end_salvo}")
+        # -------------------------------------------------------
 
 
 
