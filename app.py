@@ -55,7 +55,7 @@ if st.session_state.tela_atual == "tela_1":
 
 
     st.markdown("---")
-    st.metric(label="📊 Lucros Diários Estimados", value="0,1% a 1,0% ao dia")
+    st.metric(label="📊 Lucros Diários Estimados", value="1,0% a 5,0% ao dia")
     st.write("Nosso produto financeiro oferece rendimentos consistentes todos os dias diretamente na sua conta.")
     st.markdown("---")
     
