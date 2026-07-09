@@ -282,25 +282,59 @@ elif st.session_state.tela_atual == "tela_admin":
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             if st.button("Verificar Senha", type="primary", use_container_width=True):
-                if senha_admin == SENHA_MESTRE_ADMIN:
+                                if senha_admin == SENHA_MESTRE_ADMIN:
                     st.session_state.admin_logado = True
-                    st.success("Acesso autorizado!")
-                    time.sleep(1)
+                    st.success("Acesso liberado!")
                     st.rerun()
                 else:
-                    st.error("Senha incorreta! Acesso negado.")
-        with col_b2:
-            if st.button("← Voltar para a Home", type="secondary", use_container_width=True):
-                navegar_para("tela_1")
+                    st.error("Senha incorreta.")
+
+    # Se o administrador já estiver logado, exibe o painel com os dados novos
+    if st.session_state.admin_logado:
+        st.subheader("👥 Solicitações de Cadastro Pendentes")
+        
+        # Busca a lista completa de usuários pendentes no banco
+        usuarios_pendentes = banco.listar_usuarios_pendentes() if hasattr(banco, 'listar_usuarios_pendentes') else []
+        
+        if not usuarios_pendentes:
+            st.info("Não há novos cadastros aguardando aprovação no momento.")
+        else:
+            for usr in usuarios_pendentes:
+                # Caixa visual estilizada para cada usuário (Passo 4)
+                with st.container():
+                    st.markdown(f"### 👤 {usr.get('nome', 'Nome não informado')}")
+                    
+                    # Organização em colunas para exibir o CEP e o E-mail de forma limpa
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        st.write(f"🆔 **CPF:** {usr.get('cpf', '-')}")
+                        st.write(f"📧 **E-mail:** {usr.get('email', '-')}")
+                    with c2:
+                        st.write(f"📞 **Telefone:** {usr.get('telefone', '-')}")
+                        st.write(f"📍 **CEP:** {usr.get('cep', '-')}")
+                    with c3:
+                        st.write("⚙️ **Ações de Moderação:**")
+                        
+                        # Botões de decisão do Administrador
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn1:
+                            if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary"):
+                                if hasattr(banco, 'aprovar_usuario'):
+                                    banco.aprovar_usuario(usr.get('cpf'))
+                                    st.success("Aprovado!")
+                                    st.rerun()
+                        with col_btn2:
+                            if st.button("❌ Recusar", key=f"rc_{usr.get('cpf')}"):
+                                if hasattr(banco, 'reprovar_usuario'):
+                                    banco.reprovar_usuario(usr.get('cpf'))
+                                    st.warning("Recusado!")
+                                    st.rerun()
+                st.markdown("---")
                 
-    else:
-        col_logout_admin1, col_logout_admin2 = st.columns(2)
-        with col_logout_admin1:
-            st.write("Gerencie os acessos, valide pagamentos e autorize os saques dos investidores.")
-        with col_logout_admin2:
-            if st.button("🔒 Sair do Painel Admin", type="secondary", use_container_width=True):
-                st.session_state.admin_logado = False
-                navegar_para("tela_1")
+        if st.button("← Sair do Painel Admin"):
+            st.session_state.admin_logado = False
+            navegar_para("tela_1")
+
                 
         st.markdown("---")
         aba_tela5, aba_tela6, aba_tela7, aba_rendimentos = st.tabs([
