@@ -95,7 +95,7 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-    # --- BUSCA SEGURA DE CEP (SISTEMA POSTAL) ---
+        # --- BUSCA ULTRAESTÁVEL DE CEP (AWESOMEAPI) ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
         cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
@@ -103,17 +103,24 @@ elif st.session_state.tela_atual == "tela_2":
             st.session_state.end_salvo = ""
             
         if len(cep_limpo_busca) == 8:
-            import pycep_correios
+            import urllib.request
+            import json
             try:
-                dados_cep = pycep_correios.get_address_from_cep(cep_limpo_busca)
-                st.session_state.end_salvo = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('cidade', '')}/{dados_cep.get('uf', '')}"
+                # Requisição segura e otimizada para servidores em nuvem
+                url = f"https://awesomeapi.com.br{cep_limpo_busca}"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    dados_cep = json.loads(response.read().decode())
+                
+                st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
                 st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
             except Exception:
-                st.error("❌ CEP não encontrado ou instabilidade no sistema postal.")
+                st.error("❌ CEP não encontrado ou erro na verificação automática.")
                 st.session_state.end_salvo = ""
         else:
             st.session_state.end_salvo = ""
-        # --------------------------------------------
+        # -----------------------------------------------
+
 
 
              
