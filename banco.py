@@ -224,28 +224,20 @@ def aplicar_rendimento_manual(cpf, porcentagem):
         pass
     # ----------------------------------------------------------------------------------
 
-    def atualizar_rendimento(cpf, novo_valor_rendimento):
-    """Atualiza o saldo de rendimento sacável do cliente no Passo 4."""
+def atualizar_rendimento(cpf, novo_valor_rendimento):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE usuarios SET rendimento = ? WHERE cpf = ?",
-        (novo_valor_rendimento, cpf)
-    )
+    cursor.execute("UPDATE usuarios SET rendimento = ? WHERE cpf = ?", (novo_valor_rendimento, cpf))
     conn.commit()
     conn.close()
 
 def atualizar_saldos_liberacao(cpf, valor_a_liberar):
-    """Remove o valor do capital retido (saldo) e transfere para o rendimento liberado."""
     conn = conectar()
     cursor = conn.cursor()
-    # Reduz o valor do saldo principal retido e soma o mesmo valor no rendimento liberado
-    cursor.execute(
-        "UPDATE usuarios SET saldo = saldo - ?, rendimento = rendimento + ? WHERE cpf = ?",
-        (valor_a_liberar, valor_a_liberar, cpf)
-    )
+    cursor.execute("UPDATE usuarios SET saldo = saldo - ?, rendimento = rendimento + ? WHERE cpf = ?", (valor_a_liberar, valor_a_liberar, cpf))
     conn.commit()
     conn.close()
+
 
 
 
