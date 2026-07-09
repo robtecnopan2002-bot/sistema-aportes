@@ -1,12 +1,13 @@
 import sqlite3
+import os
 
-# ALTERAÇÃO DO PASSO 4: Força a nuvem a criar um banco totalmente novo e limpo
-DB_NAME = "sistema_v2.db"
-
+# Define o caminho absoluto e definitivo para a nuvem não se perder entre as pastas
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "banco_rcb_final.db")
 
 def conectar():
-    """Conecta ao banco de dados SQLite e corrige saldos nulos."""
-    conn = sqlite3.connect(DB_NAME)
+    """Conecta ao banco de dados SQLite oficial do sistema."""
+    return sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     try:
         # Preenche com 0.0 qualquer conta antiga que esteja com o rendimento nulo/vazio
