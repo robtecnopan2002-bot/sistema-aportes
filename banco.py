@@ -81,7 +81,10 @@ def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
 
 def obter_usuario(cpf):
     conn = conectar()
+    # Ativa o mapeamento por nome de coluna nativo do SQLite
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+    
     try:
         cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
@@ -93,21 +96,27 @@ def obter_usuario(cpf):
             pass
         cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
+        
     conn.close()
+    
     if linha:
+        # Transforma o retorno em um dicionário amigável usando os nomes das colunas do banco
+        dados = dict(linha)
         return {
-            "nome": linha[0],
-            "cpf": linha[1],
-            "telefone": linha[2],
-            "cep": linha[3],
-            "email": linha[4],
-            "senha": linha[5],
-            "saldo": linha[6],
-            "status": linha[7],
-            "plano_ativo": linha[8],
-            "rendimento": linha[9] if len(linha) > 9 and linha[9] is not None else 0.0
+            "nome": dados.get("nome", ""),
+            "cpf": dados.get("cpf", ""),
+            "telefone": dados.get("telefone", ""),
+            "cep": dados.get("cep", ""),
+            "email": dados.get("email", ""),
+            "senha": dados.get("senha", ""),
+            "saldo": float(dados.get("saldo", 0.0) if dados.get("saldo") is not None else 0.0),
+            "status": dados.get("status", ""),
+            "plano_ativo": dados.get("plano_ativo", "Nenhum"),
+            # Puxa diretamente pelo nome da coluna 'rendimento' gravada no banco
+            "rendimento": float(dados.get("rendimento", 0.0) if dados.get("rendimento") is not None else 0.0)
         }
     return None
+
 
 
 def listar_usuarios_pendentes():
