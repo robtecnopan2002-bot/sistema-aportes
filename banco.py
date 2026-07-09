@@ -73,14 +73,24 @@ def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
 def obter_usuario(cpf):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, status, saldo, plano_ativo FROM usuarios WHERE cpf = ?", (cpf,))
+    cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+
     row = cursor.fetchone()
     conn.close()
-    if row:
+    if linha:
         return {
-            "nome": row[0], "cpf": row[1], "telefone": row[2], "cep": row[3],
-            "email": row[4], "senha": row[5], "status": row[6], "saldo": row[7], "plano_ativo": row[8]
+            "nome": linha[0],
+            "cpf": linha[1],
+            "telefone": linha[2],
+            "cep": linha[3],
+            "email": linha[4],
+            "senha": linha[5],
+            "saldo": linha[6],
+            "status": linha[7],
+            "plano_ativo": linha[8],  # ← ADICIONE UMA VÍRGULA AQUI
+            "rendimento": linha[9] if linha and len(linha) > 9 else 0.0  # ← COLE ESTA LINHA AQUI
         }
+
     return None
 
 def listar_usuarios_pendentes():
