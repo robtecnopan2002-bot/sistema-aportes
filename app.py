@@ -229,19 +229,63 @@ elif st.session_state.tela_atual == "tela_3":
                     navegar_para("tela_4")
             st.markdown("---")
             
-    with tab_solicitar_saque:
-        if user["saldo"] <= 0:
-            st.warning("Você não possui saldo disponível para realizar saques.")
+       with tab_solicitar_saque:
+        # Puxa os valores de rendimento e controle. 
+        # (Se o seu banco ainda não tiver esses campos separados, o código assume zero como segurança)
+        rendimento_disponivel = user.get("rendimento", 0.0)
+        valor_retido = user.get("saldo", 0.0)  # O valor principal aportado
+        
+        # Informativo visual das regras de saque da RCB Aportes (Passo 4 - UX)
+        st.markdown(
+            f"""
+            <div style="background-color: #081F42; padding: 15px; border-radius: 8px; border-left: 5px solid #B59453; margin-bottom: 20px;">
+                <p style="margin: 0; color: #FFFFFF; font-size: 14px;">📋 <b>Regras de Resgate RCB:</b></p>
+                <ul style="margin: 5px 0 0 0; padding-left: 20px; color: #A0AEC0; font-size: 13px;">
+                    <li>Saque imediato permitido apenas sobre o <b>Valor de Rendimento</b>.</li>
+                    <li>O valor principal do aporte fica retido por <b>15 dias</b> ou depende de <b>autorização do administrador</b>.</li>
+                </ul>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        # Mostra os saldos divididos para o cliente
+        col_saque1, col_saque2 = st.columns(2)
+        with col_saque1:
+            st.metric(label="📈 Rendimento Liberado", value=f"R$ {rendimento_disponivel:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        with col_saque2:
+            st.metric(label="🔒 Capital Aportado (Retido)", value=f"R$ {valor_retido:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.markdown("---")
+        
+        # Validação para liberar o formulário de saque
+        if rendimento_disponivel <= 0 and valor_retido <= 0:
+            st.warning("Você não possui saldo ou rendimentos no sistema.")
+            
+        elif rendimento_disponivel <= 0:
+            st.info("👋 Seu rendimento disponível para saque imediato está zerado. Para resgatar o Capital Aportado antes do prazo, entre em contato com o suporte para solicitar a autorização do administrador.")
+            
         else:
-            valor_saque = st.number_input("Valor do saque (R$)", min_value=1.0, max_value=user["saldo"], step=50.0)
-            chave_pix_saque = st.text_input("Informe sua Chave PIX")
-            if st.button("Confirmar Pedido de Saque", type="primary"):
-                if chave_pix_saque:
-                    # NOVO: Registra o pedido de saque no banco
+            # Permite o saque travando o limite máximo estritamente no valor do rendimento
+            valor_saque = st.number_input(
+                "Valor do saque (R$)", 
+                min_value=1.0, 
+                max_value=float(rendimento_disponivel), 
+                step=10.0,
+                help="O valor não pode ultrapassar o rendimento liberado."
+            )
+            chave_pix_saque = st.text_input("Informe sua Chave PIX para recebimento:")
+            
+            if st.button("Confirmar Pedido de Saque", type="primary", key="btn_confirmar_saque_real"):
+                if not chave_pix_saque.strip():
+                    st.error("⚠️ Por favor, informe sua Chave PIX para continuar.")
+                else:
+                    # Registra o pedido de saque no banco de dados
                     banco.solicitar_saque(cpf, user["nome"], valor_saque, chave_pix_saque)
-                    st.success("✅ Solicitação de saque enviada!")
+                    st.success(f"✅ Solicitação de saque de R$ {valor_saque:,.2f} enviada para processamento!")
+                    import time
                     time.sleep(1.5)
                     st.rerun()
+
         
     if st.button("← Sair / Fazer Logout"):
         st.session_state.usuario_logado = None
