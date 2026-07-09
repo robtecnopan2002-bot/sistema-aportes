@@ -299,37 +299,43 @@ elif st.session_state.tela_atual == "tela_admin":
         if not usuarios_pendentes:
             st.info("Não há novos cadastros aguardando aprovação no momento.")
         else:
+                    else:
+            st.markdown("### 📋 Novos clientes aguardando autorização")
+            
             for usr in usuarios_pendentes:
-                # Caixa visual estilizada para cada usuário (Passo 4)
                 with st.container():
-                    st.markdown(f"### 👤 {usr.get('nome', 'Nome não informado')}")
+                    # Nome principal do cliente aguardando
+                    st.markdown(f"**👤 Cliente: {usr.get('nome', 'Não informado')}**")
                     
-                    # Organização em colunas para exibir o CEP e o E-mail de forma limpa
-                    c1, c2, c3 = st.columns(3)
-                    with c1:
-                        st.write(f"🆔 **CPF:** {usr.get('cpf', '-')}")
-                        st.write(f"📧 **E-mail:** {usr.get('email', '-')}")
-                    with c2:
-                        st.write(f"📞 **Telefone:** {usr.get('telefone', '-')}")
-                        st.write(f"📍 **CEP:** {usr.get('cep', '-')}")
-                    with c3:
-                        st.write("⚙️ **Ações de Moderação:**")
-                        
-                        # Botões de decisão do Administrador
-                        col_btn1, col_btn2 = st.columns(2)
-                        with col_btn1:
-                            if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary"):
-                                if hasattr(banco, 'aprovar_usuario'):
-                                    banco.aprovar_usuario(usr.get('cpf'))
-                                    st.success("Aprovado!")
-                                    st.rerun()
-                        with col_btn2:
-                            if st.button("❌ Recusar", key=f"rc_{usr.get('cpf')}"):
-                                if hasattr(banco, 'reprovar_usuario'):
-                                    banco.reprovar_usuario(usr.get('cpf'))
-                                    st.warning("Recusado!")
-                                    st.rerun()
-                st.markdown("---")
+                    # Dados secundários em formato menor e compacto (Passo 4 - UX)
+                    texto_detalhes = f"""
+                    <div style='line-height: 1.4; margin-top: -5px; margin-bottom: 10px;'>
+                        <small style='color: #A0AEC0;'>
+                            <b>CPF:</b> {usr.get('cpf', '-')} | 
+                            <b>Telefone:</b> {usr.get('telefone', '-')} <br>
+                            <b>E-mail:</b> {usr.get('email', '-')} | 
+                            <b>CEP:</b> {usr.get('cep', '-')}
+                        </small>
+                    </div>
+                    """
+                    st.markdown(texto_detalhes, unsafe_allow_html=True)
+                    
+                    # Botões de ação alinhados lado a lado de forma compacta
+                    col_b1, col_b2, col_espaco = st.columns([1, 1, 4])
+                    with col_b1:
+                        if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary", use_container_width=True):
+                            if hasattr(banco, 'aprovar_usuario'):
+                                banco.aprovar_usuario(usr.get('cpf'))
+                                st.success("Aprovado!")
+                                st.rerun()
+                    with col_b2:
+                        if st.button("❌ Recusar", key=f"rc_{usr.get('cpf')}", use_container_width=True):
+                            if hasattr(banco, 'reprovar_usuario'):
+                                banco.reprovar_usuario(usr.get('cpf'))
+                                st.warning("Recusado!")
+                                st.rerun()
+                st.markdown("<br>", unsafe_allow_html=True)
+
                 
         if st.button("← Sair do Painel Admin"):
             st.session_state.admin_logado = False
