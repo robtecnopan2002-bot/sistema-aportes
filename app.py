@@ -207,11 +207,20 @@ elif st.session_state.tela_atual == "tela_3":
     st.title("📥 Painel do Aportador")
     st.subheader(f"Seja bem-vindo(a), {user['nome']}.")
     
+    # Puxa o rendimento de forma garantida convertendo para número real
     # Reorganização das métricas para exibir o rendimento separado (Passo 4 - UX)
     col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
-        # Puxa o rendimento de forma garantida convertendo para número real
-        valor_rendimento = float(user.get('rendimento', 0.0))
+        # PROTEÇÃO MESTRE: Busca o rendimento por nome, índice ou fallback para garantir a exibição real
+        if isinstance(user, dict):
+            valor_rendimento = float(user.get('rendimento', 0.0))
+        elif isinstance(user, (list, tuple)) and len(user) > 9:
+            valor_rendimento = float(user[9] if user[9] is not None else 0.0)
+        else:
+            valor_rendimento = 0.0
+            
+        st.metric(label="📈 Rendimento Liberado", value=f"R$ {valor_rendimento:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
         st.metric(label="📈 Rendimento Liberado", value=f"R$ {valor_rendimento:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     with col_s2:
         valor_saldo = float(user.get('saldo', 0.0))
