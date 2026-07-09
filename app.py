@@ -353,43 +353,32 @@ elif st.session_state.tela_atual == "tela_admin":
                                 if not motivo_email.strip():
                                     st.error("⚠️ Você precisa escrever o motivo antes de confirmar.")
                                 else:
-                                    # Configurações do seu e-mail emissor
-                                    EMAIL_REMETENTE = "seu_email@gmail.com"
-                                    SENHA_EMISSOR = "sua_senha_de_app"  # Senha de App de 16 dígitos
+                                    import resend
                                     
-                                    import smtplib
-                                    from email.mime.text import MIMEText
-                                    from email.mime.multipart import MIMEMultipart
+                                    # Configura sua chave de acesso segura da Resend
+                                    resend.api_key = "re_dgFDAfPn_P6ufY2Nr9Dqk7BpJLbFqAwyg"
                                     
                                     try:
-                                        # 1. Montagem do corpo do e-mail estruturado (Passo 4)
-                                        msg = MIMEMultipart()
-                                        msg['From'] = EMAIL_REMETENTE
-                                        msg['To'] = usr.get('email')
-                                        msg['Subject'] = "RCB Aportes - Atualização do Status de Cadastro"
+                                        # 1. Envia o e-mail via protocolo HTTP (Aceito pelo Streamlit Cloud)
+                                        r = resend.Emails.send({
+                                            "from": "onboarding@resend.dev",  # Remetente padrão gratuito de teste
+                                            "to": usr.get('email'),
+                                            "subject": "RCB Aportes - Atualização do Status de Cadastro",
+                                            "text": f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
+                                        })
                                         
-                                        corpo_mensagem = f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
-                                        msg.attach(MIMEText(corpo_mensagem, 'plain'))
-                                        
-                                        # 2. Conexão segura com o servidor do Gmail (porta 587)
-                                        server = smtplib.SMTP('://gmail.com', 587)
-                                        server.starttls()
-                                        server.login(EMAIL_REMETENTE, SENHA_EMISSOR)
-                                        server.sendmail(EMAIL_REMETENTE, usr.get('email'), msg.as_string())
-                                        server.quit()
-                                        
-                                        # 3. Executa a recusa no banco de dados após o sucesso do e-mail
+                                        # 2. Executa a recusa no banco de dados após o sucesso do envio
                                         if hasattr(banco, 'reprovar_usuario'):
                                             banco.reprovar_usuario(usr.get('cpf'))
                                             
-                                        st.success(f"✅ Notificação enviada com sucesso para {usr.get('email')}!")
+                                        st.success(f"✅ Notificação enviada via API para {usr.get('email')}!")
                                         st.session_state[chave_recusa] = False
                                         import time
                                         time.sleep(2)
                                         st.rerun()
                                         
                                     except Exception as e:
-                                        st.error(f"❌ Falha ao enviar o e-mail real: {e}. O usuário não foi removido.")
+                                        st.error(f"❌ Falha no envio pela nuvem: {e}. O usuário foi mantido para nova tentativa.")
 
                         with col_env2:
                             if st.button("Cancelar", key=f"canc_rc_{usr.get('cpf')}"):
