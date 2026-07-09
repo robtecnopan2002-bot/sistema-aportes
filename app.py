@@ -95,7 +95,7 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA SEGURA DE CEP (SISTEMA POSTAL) ---
+               # --- BUSCA SEGURA DE CEP (SISTEMA POSTAL) ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
         cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
@@ -114,6 +114,7 @@ elif st.session_state.tela_atual == "tela_2":
         else:
             st.session_state.end_salvo = ""
         # --------------------------------------------
+
 
              
         cad_email = st.text_input("E-mail", key="reg_email")
