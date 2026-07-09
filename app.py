@@ -114,18 +114,8 @@ elif st.session_state.tela_atual == "tela_2":
         else:
             st.session_state.end_salvo = ""
         # --------------------------------------------
-        # --------------------------------------------
 
-        # --------------------------------------------
-
-            except:
-                st.error("⚠️ Erro ao buscar CEP. Verifique a conexão.")
-                st.session_state.end_salvo = ""
-        else:
-            st.session_state.end_salvo = ""
-        # --------------------------------------------
-
-    
+             
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
 
