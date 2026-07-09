@@ -95,31 +95,36 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA ULTRAESTÁVEL DE CEP (AWESOMEAPI) ---
+        # --- BUSCA DE CEP CONTROLADA POR BOTÃO ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
-        cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
         if "end_salvo" not in st.session_state:
             st.session_state.end_salvo = ""
             
-        if len(cep_limpo_busca) == 8:
-            import urllib.request
-            import json
-            try:
-                # Requisição segura e otimizada para servidores em nuvem
-                url = f"https://awesomeapi.com.br{cep_limpo_busca}"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req, timeout=5) as response:
-                    dados_cep = json.loads(response.read().decode())
-                
-                st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
-                st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
-            except Exception:
-                st.error("❌ CEP não encontrado ou erro na verificação automática.")
+        # Botão secundário dourado para disparar a busca apenas quando clicado
+        if st.button("🔍 Buscar Endereço", type="secondary"):
+            cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
+            if len(cep_limpo_busca) != 8:
+                st.error("❌ Digite um CEP válido com 8 números antes de buscar.")
                 st.session_state.end_salvo = ""
-        else:
-            st.session_state.end_salvo = ""
-        # -----------------------------------------------
+            else:
+                import urllib.request
+                import json
+                try:
+                    url = f"https://awesomeapi.com.br{cep_limpo_busca}"
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, timeout=5) as response:
+                        dados_cep = json.loads(response.read().decode())
+                    
+                    st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
+                except Exception:
+                    st.error("❌ CEP não encontrado ou erro na verificação automática.")
+                    st.session_state.end_salvo = ""
+
+        # Mantém o endereço visível na tela em uma caixa verde de sucesso se for encontrado
+        if st.session_state.end_salvo:
+            st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
+        # -----------------------------------------
 
 
 
