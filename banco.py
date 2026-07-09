@@ -238,26 +238,27 @@ def aplicar_rendimento_manual(cpf, porcentagem):
     # ----------------------------------------------------------------------------------
 
 def injetar_lucro_cliente(cpf, valor_lucro):
+    """Soma o rendimento diretamente no saldo do aporte do cliente."""
     conn = conectar()
     cursor = conn.cursor()
-    # Usa a função COALESCE do próprio SQLite para garantir que se o rendimento for nulo, ele assuma 0.0 antes de somar
     cursor.execute(
-        "UPDATE usuarios SET rendimento = COALESCE(rendimento, 0.0) + ? WHERE cpf = ?", 
+        "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) + ? WHERE cpf = ?", 
         (float(valor_lucro), str(cpf))
     )
     conn.commit()
     conn.close()
 
 def processar_liberacao_aporte(cpf, valor_a_liberar):
+    """Função mantida para compatibilidade, somando ou ajustando o saldo principal."""
     conn = conectar()
     cursor = conn.cursor()
-    # Move o saldo retido para o rendimento liberado de forma direta
     cursor.execute(
-        "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) - ?, rendimento = COALESCE(rendimento, 0.0) + ? WHERE cpf = ?", 
-        (float(valor_a_liberar), float(valor_a_liberar), str(cpf))
+        "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) + ? WHERE cpf = ?", 
+        (float(valor_a_liberar), str(cpf))
     )
     conn.commit()
     conn.close()
+
 
 
 
