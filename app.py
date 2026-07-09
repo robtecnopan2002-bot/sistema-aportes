@@ -1,6 +1,7 @@
 import streamlit as st
 import time
-import banco  # NOVO: Importa nosso arquivo de banco de dados permanente
+import banco
+
 
 # 1. INICIALIZAÇÃO DE VARIÁVEIS DO SISTEMA
 if "tela_atual" not in st.session_state:
