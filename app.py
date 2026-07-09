@@ -284,7 +284,7 @@ elif st.session_state.tela_atual == "tela_3":
                     st.success(f"✅ Solicitação de saque de R$ {valor_saque:,.2f} enviada para processamento!")
                     import time
                     time.sleep(1.5)
-                    st.rerun()
+                    st.return()
 
         
     if st.button("← Sair / Fazer Logout"):
