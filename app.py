@@ -43,8 +43,8 @@ def navegar_para(nova_tela):
 # --- TELA 1: VISUALIZAÇÃO DO PRODUTO ---
 if st.session_state.tela_atual == "tela_1":
     # Cabeçalho RCB Aportes estilizado
-    st.markdown('<p class="titulo-logo">RCB</p>', unsafe_replace_html=True)
-    st.markdown('<p class="subtitulo-logo">APORTES</p>', unsafe_replace_html=True)
+    st.markdown('<p class="titulo-logo">RCB</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitulo-logo">APORTES</p>', unsafe_allow_html=True)
     
     st.subheader("Multiplique seu capital diariamente")
     st.markdown("---")
