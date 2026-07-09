@@ -95,36 +95,41 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA DE CEP CONTROLADA POR BOTÃO ---
+        # --- BUSCA INTELIGENTE DE CEP COM ENTRADA MANUAL DE SEGURANÇA ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
         if "end_salvo" not in st.session_state:
             st.session_state.end_salvo = ""
             
-        # Botão secundário dourado para disparar a busca apenas quando clicado
-        if st.button("🔍 Buscar Endereço", type="secondary"):
-            cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
-            if len(cep_limpo_busca) != 8:
-                st.error("❌ Digite um CEP válido com 8 números antes de buscar.")
-                st.session_state.end_salvo = ""
-            else:
-                import urllib.request
-                import json
-                try:
-                    url = f"https://awesomeapi.com.br{cep_limpo_busca}"
-                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req, timeout=5) as response:
-                        dados_cep = json.loads(response.read().decode())
-                    
-                    st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
-                except Exception:
-                    st.error("❌ CEP não encontrado ou erro na verificação automática.")
-                    st.session_state.end_salvo = ""
+        col_cep1, col_cep2 = st.columns([1, 1])
+        with col_cep1:
+            if st.button("🔍 Buscar Endereço", type="secondary", use_container_width=True):
+                cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
+                if len(cep_limpo_busca) == 8:
+                    import urllib.request
+                    import json
+                    try:
+                        url = f"https://cep.awesomeapi.com.br/json/{cep_limpo_busca}"
+                        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                        with urllib.request.urlopen(req, timeout=4) as response:
+                            dados_cep = json.loads(response.read().decode())
+                        st.session_state.end_salvo = f"{dados_cep.get('address', '')}, {dados_cep.get('district', '')} - {dados_cep.get('city', '')}/{dados_cep.get('state', '')}"
+                    except Exception:
+                        st.session_state.end_salvo = "Liberar Digitação"
+                else:
+                    st.error("Digite 8 números.")
 
-        # Mantém o endereço visível na tela em uma caixa verde de sucesso se for encontrado
-        if st.session_state.end_salvo:
+        with col_cep2:
+            if st.button("✏️ Digitar Manualmente", type="secondary", use_container_width=True):
+                st.session_state.end_salvo = "Liberar Digitação"
+
+        # Mostra o resultado da busca ou o campo para preenchimento manual
+        if st.session_state.end_salvo == "Liberar Digitação":
+            st.session_state.end_salvo = st.text_input("Digite seu endereço completo (Rua, Número, Bairro, Cidade):", key="input_end_manual")
+        elif st.session_state.end_salvo:
             st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
-        # -----------------------------------------
+        # -----------------------------------------------------------------
+
 
 
 
