@@ -260,9 +260,20 @@ elif st.session_state.tela_atual == "tela_4":
     st.write("Escaneie o QR Code ou utilize a chave Copia e Cola:")
     st.image("https://qrserver.com", width=250)
     
-    chave_copia_cola = f"00020101021126330014br.gov.bcb.pix0111123456789015204000053039865405{int(valor)}005802BR5913SISTEMA_APORT6009SAO_PAULO62070503***6304"
-    st.text_area("Chave Pix Copia e Cola:", value=chave_copia_cola, height=90)
+    # --- GERADOR DINÂMICO DE PIX DA SUA CONTA (PASSO 4) ---
+    minha_chave_real = st.secrets.get("CHAVE_PIX_RECEBIMENTO", "suachave@exemplo.com")
+    
+    # Monta a estrutura oficial do PIX de acordo com o padrão do Banco Central
+    tamanho_chave = f"{len(minha_chave_real):02d}"
+    valor_formatado = f"{valor:.2f}"
+    tamanho_valor = f"{len(valor_formatado):02d}"
+    
+    # String dinâmica contendo a sua conta, o valor exato do plano e o nome identificador
+    chave_copia_cola = f"00020101021126330014br.gov.bcb.pix01{tamanho_chave}{minha_chave_real}52040000530398654{tamanho_valor}{valor_formatado}5802BR5911RCB_APORTES6009SAO_PAULO62070503***6304"
+    
+    st.text_area("Chave Pix Copia e Cola (Clique para copiar e pagar):", value=chave_copia_cola, height=90)
     st.markdown("---")
+
     
     if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True):
         banco.solicitar_aporte(cpf_cliente, nome_cliente, plano, valor)
