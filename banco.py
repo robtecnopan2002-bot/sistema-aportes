@@ -1,7 +1,5 @@
 import sqlite3
-
-DB_NAME = "sistema_financeiro.db"
-
+#DB_NAME = "sistema_financeiro.db"
 def conectar():
     """Conecta ao banco de dados SQLite."""
     return sqlite3.connect(DB_NAME)
