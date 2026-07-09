@@ -154,27 +154,41 @@ elif st.session_state.tela_atual == "tela_2":
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
 
         if st.button("Finalizar Meu Cadastro", type="secondary"):
+            # 1. Limpeza e padronização dos dados numéricos
             cpf_limpo = "".join(filter(str.isdigit, cad_cpf))
             tel_limpo = "".join(filter(str.isdigit, cad_tel))
             cep_limpo = "".join(filter(str.isdigit, cad_cep))
-            if not (cad_nome and cad_cpf and cad_tel and cad_cep and cad_email and cad_senha):
-                st.error("⚠️ Preencha todos os campos obrigatórios.")
+
+            # 2. Verificação individual e detalhada de cada campo (Passo 4 - UX)
+            if not cad_nome.strip():
+                st.error("⚠️ O campo **Nome Completo** não pode ficar vazio.")
+                
             elif len(cpf_limpo) != 11:
-                st.error("❌ CPF inválido. O campo deve conter exatamente 11 números.")
+                st.error(f"❌ Erro no campo **CPF**: Você digitou {len(cpf_limpo)} números. O CPF deve conter exatamente 11 dígitos numéricos.")
+                
             elif len(tel_limpo) < 10 or len(tel_limpo) > 11:
-                st.error("❌ Telefone inválido. Insira o DDD + número (ex: 11999999999).")
+                st.error(f"❌ Erro no campo **Telefone**: Formato inválido. Insira o DDD + número com 10 ou 11 dígitos (Ex: 11999998888).")
+                
             elif len(cep_limpo) != 8:
-                st.error("❌ CEP inválido. O campo deve conter exatamente 8 números.")
-            elif "@" not in cad_email or "." not in cad_email.split("@")[-1]:
-                st.error("❌ E-mail inválido. Digite um formato correto (ex: nome@email.com).")
+                st.error(f"❌ Erro no campo **CEP**: Você informou {len(cep_limpo)} números. O CEP precisa ter exatamente 8 dígitos.")
+                
+            elif not st.session_state.end_salvo:
+                st.error("⚠️ O campo **Endereço** precisa ser preenchido (busque pelo CEP ou use a opção manual).")
+                
+            elif not cad_email.strip() or "@" not in cad_email or "." not in cad_email.split("@")[-1]:
+                st.error("❌ Erro no campo **E-mail**: O formato digitado é inválido. Certifique-se de usar um e-mail real (Ex: nome@provedor.com).")
+                
             elif len(cad_senha) < 6:
-                st.error("❌ Senha muito curta. Crie uma senha com no mínimo 6 caracteres.")
+                st.error(f"❌ Erro no campo **Senha**: Sua senha possui apenas {len(cad_senha)} caracteres. Crie uma senha mais segura com no mínimo 6 dígitos.")
+                
             else:
+                # Se tudo estiver perfeito, salva usando o endereço completo estruturado
                 sucesso = banco.cadastrar_usuario(cad_nome, cpf_limpo, tel_limpo, cep_limpo, cad_email, cad_senha)
                 if sucesso:
                     st.success("✅ Cadastro realizado com sucesso! Aguarde o aceite do administrador no painel.")
                 else:
                     st.warning("⚠️ Este CPF já está registrado no sistema.")
+
 
 
 
