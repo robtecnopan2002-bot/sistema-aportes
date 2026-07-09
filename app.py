@@ -400,13 +400,20 @@ elif st.session_state.tela_atual == "tela_admin":
 
                     # Botões de ação alinhados lado a lado (Corrigido com proporção exata)
                     col_b1, col_b2, col_espaco = st.columns([2, 2, 6])
+                    
                     with col_b1:
-
                         if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary", use_container_width=True):
                             if hasattr(banco, 'aprovar_usuario'):
+                                # Executa a aprovação padrão do cliente
                                 banco.aprovar_usuario(usr.get('cpf'))
-                                st.success("Aprovado!")
+                                
+                                # INTERVENÇÃO DO PASSO 4: Força a coluna rendimento a iniciar como número 0.0 puro
+                                if hasattr(banco, 'atualizar_rendimento'):
+                                    banco.atualizar_rendimento(usr.get('cpf'), 0.0)
+                                    
+                                st.success("Aprovado com contabilidade limpa!")
                                 st.rerun()
+
                     with col_b2:
                         if st.button("❌ Recusar", key=f"rc_{usr.get('cpf')}", use_container_width=True):
                             st.session_state[chave_recusa] = True  # Ativa a caixa de texto na tela
