@@ -4,7 +4,7 @@ conn = sqlite3.connect("sistema_financeiro.db")
 cursor = conn.cursor()
 
 # Substitua 'usuarios' pelo nome real da sua tabela de clientes/testes
-cursor.execute("SELECT * FROM usuarios;")
+cursor.execute("SELECT * FROM banco;")
 dados = cursor.fetchall()
 
 for linha in dados:
