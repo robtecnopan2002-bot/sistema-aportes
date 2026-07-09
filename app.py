@@ -268,12 +268,26 @@ elif st.session_state.tela_atual == "tela_4":
     st.info(f"Valor a pagar: **R$ {valor:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     st.write("Escaneie o QR Code abaixo usando o aplicativo do seu banco:")
     
-    # 3. GERADOR AUTOMÁTICO DE QR CODE REAL (Usa a chave já calculada acima)
-    import urllib.parse
-    string_pix_codificada = urllib.parse.quote(chave_copia_cola)
-    link_qr_code_real = f"https://qrserver.com{string_pix_codificada}"
+    # 3. GERADOR INTERNO DE QR CODE REAL (PASSO 4 - BLINDADO)
+    import qrcode
+    from io import BytesIO
     
-    st.image(link_qr_code_real, width=250)
+    try:
+        # Cria o objeto do QR Code com o texto dinâmico do Pix
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(chave_copia_cola)
+        qr.make(fit=True)
+        
+        # Transforma o desenho em bytes de imagem na memória do servidor
+        img_qr = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img_qr.save(buffer, format="PNG")
+        
+        # Desenha a imagem na tela de forma direta e segura
+        st.image(buffer.getvalue(), width=250)
+    except Exception:
+        st.warning("⚠️ Aguardando geração do QR Code...")
+
     
     st.text_area("Chave Pix Copia e Cola (Clique para copiar e pagar):", value=chave_copia_cola, height=90)
     st.markdown("---")
