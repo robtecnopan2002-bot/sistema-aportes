@@ -1,5 +1,7 @@
 import sqlite3
-#DB_NAME = "sistema_financeiro.db"
+
+DB_NAME = "sistema_financeiro.db"
+
 def conectar():
     """Conecta ao banco de dados SQLite."""
     return sqlite3.connect(DB_NAME)
@@ -71,25 +73,18 @@ def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
 def obter_usuario(cpf):
     conn = conectar()
     cursor = conn.cursor()
-    
-    # --- PROTEÇÃO DO PASSO 4: TENTA BUSCAR COM RENDIMENTO, SE FALHAR ADICIONA NA HORA ---
     try:
-        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        cursor.execute("SELECT nome, cpf, telephone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
     except sqlite3.OperationalError:
         try:
-            # Se der erro porque a coluna não existe, cria ela imediatamente
             cursor.execute("ALTER TABLE usuarios ADD COLUMN rendimento REAL DEFAULT 0.0;")
             conn.commit()
-        except:
+        except Exception:
             pass
-        # Refaz a busca agora com a coluna garantida no banco
-        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        cursor.execute("SELECT nome, cpf, telephone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
-    # ----------------------------------------------------------------------------------
-
     conn.close()
-
     if linha:
         return {
             "nome": linha[0],
@@ -103,7 +98,8 @@ def obter_usuario(cpf):
             "plano_ativo": linha[8],
             "rendimento": linha[9] if len(linha) > 9 and linha[9] is not None else 0.0
         }
-     return None
+    return None
+
 
 def listar_usuarios_pendentes():
     conn = conectar()
