@@ -95,7 +95,7 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
         
-        # --- BUSCA AUTOMÁTICA DE CEP (CORRIGIDO) ---
+        # --- BUSCA SEGURA DE CEP (SISTEMA POSTAL) ---
         cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
         
         cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
@@ -103,19 +103,18 @@ elif st.session_state.tela_atual == "tela_2":
             st.session_state.end_salvo = ""
             
         if len(cep_limpo_busca) == 8:
-            import urllib.request
-            import json
+            import pycep_correios
             try:
-                url = f"https://viacep.com.br{cep_limpo_busca}/json/"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req) as response:
-                    dados_cep = json.loads(response.read().decode())
-                if "erro" not in dados_cep:
-                    st.session_state.end_salvo = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('localidade', '')}/{dados_cep.get('uf', '')}"
-                    st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
-                else:
-                    st.error("❌ CEP não encontrado.")
-                    st.session_state.end_salvo = ""
+                dados_cep = pycep_correios.get_address_from_cep(cep_limpo_busca)
+                st.session_state.end_salvo = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('cidade', '')}/{dados_cep.get('uf', '')}"
+                st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
+            except:
+                st.error("❌ CEP não encontrado ou instabilidade no sistema postal.")
+                st.session_state.end_salvo = ""
+        else:
+            st.session_state.end_salvo = ""
+        # --------------------------------------------
+
             except:
                 st.error("⚠️ Erro ao buscar CEP. Verifique a conexão.")
                 st.session_state.end_salvo = ""
