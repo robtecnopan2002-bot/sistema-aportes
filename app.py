@@ -325,9 +325,10 @@ elif st.session_state.tela_atual == "tela_admin":
                     if chave_recusa not in st.session_state:
                         st.session_state[chave_recusa] = False
 
-                    # Botões de ação alinhados lado a lado
-                    col_b1, col_b2, col_espaco = st.columns()
+                    # Botões de ação alinhados lado a lado (Corrigido com proporção exata)
+                    col_b1, col_b2, col_espaco = st.columns([2, 2, 6])
                     with col_b1:
+
                         if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary", use_container_width=True):
                             if hasattr(banco, 'aprovar_usuario'):
                                 banco.aprovar_usuario(usr.get('cpf'))
