@@ -238,26 +238,27 @@ def aplicar_rendimento_manual(cpf, porcentagem):
     # ----------------------------------------------------------------------------------
 
 def injetar_lucro_cliente(cpf, valor_lucro):
-    """Soma o lucro exclusivamente na coluna rendimento do SQLite sem mexer no saldo."""
     conn = conectar()
     cursor = conn.cursor()
-    # Puxa o rendimento atual para somar com o novo de forma matemática limpa
-    cursor.execute("SELECT rendimento FROM usuarios WHERE cpf = ?", (cpf,))
-    linha = cursor.fetchone()
-    rend_atual = float(linha[0]) if linha and linha[0] is not None else 0.0
-    
-    # Executa o comando atualizando apenas o campo correto
-    cursor.execute("UPDATE usuarios SET rendimento = ? WHERE cpf = ?", (rend_atual + float(valor_lucro), cpf))
+    # Usa a função COALESCE do próprio SQLite para garantir que se o rendimento for nulo, ele assuma 0.0 antes de somar
+    cursor.execute(
+        "UPDATE usuarios SET rendimento = COALESCE(rendimento, 0.0) + ? WHERE cpf = ?", 
+        (float(valor_lucro), str(cpf))
+    )
     conn.commit()
     conn.close()
 
 def processar_liberacao_aporte(cpf, valor_a_liberar):
-    """Remove do saldo trancado e repassa para o rendimento livre."""
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("UPDATE usuarios SET saldo = saldo - ?, rendimento = rendimento + ? WHERE cpf = ?", (float(valor_a_liberar), float(valor_a_liberar), cpf))
+    # Move o saldo retido para o rendimento liberado de forma direta
+    cursor.execute(
+        "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) - ?, rendimento = COALESCE(rendimento, 0.0) + ? WHERE cpf = ?", 
+        (float(valor_a_liberar), float(valor_a_liberar), str(cpf))
+    )
     conn.commit()
     conn.close()
+
 
 
 
