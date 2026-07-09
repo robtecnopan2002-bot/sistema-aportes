@@ -2,7 +2,6 @@ import streamlit as st
 import time
 import banco
 
-
 # 1. INICIALIZAÇÃO DE VARIÁVEIS DO SISTEMA
 if "tela_atual" not in st.session_state:
     st.session_state.tela_atual = "tela_1"
