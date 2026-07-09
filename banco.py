@@ -73,10 +73,25 @@ def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
 def obter_usuario(cpf):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+    
+    # --- PROTEÇÃO DO PASSO 4: TENTA BUSCAR COM RENDIMENTO, SE FALHAR ADICIONA NA HORA ---
+    try:
+        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        linha = cursor.fetchone()
+    except sqlite3.OperationalError:
+        try:
+            # Se der erro porque a coluna não existe, cria ela imediatamente
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN rendimento REAL DEFAULT 0.0;")
+            conn.commit()
+        except:
+            pass
+        # Refaz a busca agora com a coluna garantida no banco
+        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        linha = cursor.fetchone()
+    # ----------------------------------------------------------------------------------
 
-    row = cursor.fetchone()
     conn.close()
+
     if linha:
         return {
             "nome": linha[0],
@@ -87,11 +102,10 @@ def obter_usuario(cpf):
             "senha": linha[5],
             "saldo": linha[6],
             "status": linha[7],
-            "plano_ativo": linha[8],  # ← ADICIONE UMA VÍRGULA AQUI
-            "rendimento": linha[9] if linha and len(linha) > 9 else 0.0  # ← COLE ESTA LINHA AQUI
+            "plano_ativo": linha[8],
+            "rendimento": linha[9] if len(linha) > 9 and linha[9] is not None else 0.0
         }
-
-    return None
+     return None
 
 def listar_usuarios_pendentes():
     conn = conectar()
