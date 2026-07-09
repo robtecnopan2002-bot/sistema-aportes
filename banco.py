@@ -74,7 +74,7 @@ def obter_usuario(cpf):
     conn = conectar()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT nome, cpf, telephone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
     except sqlite3.OperationalError:
         try:
@@ -82,7 +82,7 @@ def obter_usuario(cpf):
             conn.commit()
         except Exception:
             pass
-        cursor.execute("SELECT nome, cpf, telephone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
+        cursor.execute("SELECT nome, cpf, telefone, cep, email, senha, saldo, status, plano_ativo, rendimento FROM usuarios WHERE cpf = ?", (cpf,))
         linha = cursor.fetchone()
     conn.close()
     if linha:
