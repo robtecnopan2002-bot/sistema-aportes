@@ -282,7 +282,7 @@ elif st.session_state.tela_atual == "tela_admin":
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             if st.button("Verificar Senha", type="primary", use_container_width=True):
-                                if senha_admin == SENHA_MESTRE_ADMIN:
+                if senha_admin == SENHA_MESTRE_ADMIN:
                     st.session_state.admin_logado = True
                     st.success("Acesso liberado!")
                     st.rerun()
@@ -334,6 +334,7 @@ elif st.session_state.tela_atual == "tela_admin":
         if st.button("← Sair do Painel Admin"):
             st.session_state.admin_logado = False
             navegar_para("tela_1")
+
 
                 
         st.markdown("---")
