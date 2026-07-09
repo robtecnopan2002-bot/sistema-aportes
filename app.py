@@ -496,22 +496,42 @@ elif st.session_state.tela_atual == "tela_admin":
             if usuario_gestao:
                 st.write(f"👤 **Cliente:** {usuario_gestao['nome']} | **Plano Ativo:** {usuario_gestao.get('plano_ativo', 'Nenhum')}")
                 
-                col_g1, col_g2 = st.columns(2)
-                with col_g1:
-                    novo_rendimento = st.number_input("Adicionar Rendimento Líquido (R$):", min_value=0.0, step=10.0, key="add_rend")
-                    if st.button("📈 Lançar Rendimento", type="primary", use_container_width=True, key="btn_lancar_rend"):
-                        if hasattr(banco, 'injetar_lucro_cliente'):
-                            banco.injetar_lucro_cliente(cpf_gestao, novo_rendimento)
-                            st.success("✅ Lucro enviado com sucesso para os rendimentos!")
-                            import time; time.sleep(1.5); st.rerun()
-                
-                with col_g2:
-                    valor_liberar = st.number_input("Liberar Capital Retido para Saque (R$):", min_value=0.0, max_value=float(usuario_gestao['saldo']), step=50.0, key="lib_cap")
-                    if st.button("🔓 Autorizar Saque do Aporte", use_container_width=True, key="btn_autorizar_saque"):
-                        if hasattr(banco, 'processar_liberacao_aporte'):
-                            banco.processar_liberacao_aporte(cpf_gestao, valor_liberar)
-                            st.success("✅ Capital transferido para área sacável!")
-                            import time; time.sleep(1.5); st.rerun()
+                # --- FORMULÁRIO 1: LANÇAMENTO DE RENDIMENTO (ISOLADO E BLINDADO) ---
+                with st.form(key="form_lancar_rendimento_admin"):
+                    st.write("📊 **Painel de Rendimentos**")
+                    novo_rendimento = st.number_input("Adicionar Novo Rendimento Líquido (R$):", min_value=0.0, step=10.0, key="input_add_rend_real")
+                    
+                    if st.form_submit_button("📈 Confirmar e Lançar Rendimento", type="primary", use_container_width=True):
+                        if novo_rendimento <= 0:
+                            st.error("⚠️ Insira um valor maior que zero para lançar.")
+                        else:
+                            try:
+                                # Força o disparo direto e engole qualquer delay do Streamlit
+                                banco.injetar_lucro_cliente(cpf_gestao, novo_rendimento)
+                                st.success(f"✅ Sucesso! R$ {novo_rendimento:,.2f} adicionados ao rendimento de {usuario_gestao['nome']}.")
+                                import time; time.sleep(1.5); st.rerun()
+                            except Exception as err:
+                                st.error(f"Erro técnico ao gravar: {err}")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # --- FORMULÁRIO 2: LIBERAÇÃO DE CAPITAL RETIDO (ISOLADO) ---
+                with st.form(key="form_liberar_capital_admin"):
+                    st.write("🔓 **Carência e Quebra de Retenção**")
+                    max_liberar = float(usuario_gestao['saldo']) if usuario_gestao['saldo'] is not None else 0.0
+                    valor_liberar = st.number_input("Liberar Capital Retido para Saque Imediato (R$):", min_value=0.0, max_value=max_liberar, step=50.0, key="input_lib_cap_real")
+                    
+                    if st.form_submit_button("🔓 Autorizar Saque do Aporte", use_container_width=True):
+                        if valor_liberar <= 0:
+                            st.error("⚠️ Insira un valor maior que zero.")
+                        else:
+                            try:
+                                banco.processar_liberacao_aporte(cpf_gestao, valor_liberar)
+                                st.success(f"✅ Sucesso! R$ {valor_liberar:,.2f} transferidos para área livre.")
+                                import time; time.sleep(1.5); st.rerun()
+                            except Exception as err:
+                                st.error(f"Erro técnico ao liberar: {err}")
+
 
                 
                 with col_g2:
