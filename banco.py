@@ -236,9 +236,11 @@ def aplicar_rendimento_manual(cpf, porcentagem):
 def atualizar_rendimento(cpf, novo_valor_rendimento):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("UPDATE usuarios SET rendimento = ? WHERE cpf = ?", (novo_valor_rendimento, cpf))
+    # Força o banco a gravar o valor estritamente na coluna 'rendimento' isolada
+    cursor.execute("UPDATE usuarios SET rendimento = ? WHERE cpf = ?", (float(novo_valor_rendimento), cpf))
     conn.commit()
     conn.close()
+
 
 def atualizar_saldos_liberacao(cpf, valor_a_liberar):
     conn = conectar()
