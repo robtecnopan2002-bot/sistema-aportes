@@ -161,20 +161,36 @@ def solicitar_saque(cpf, nome, valor, chave_pix):
     conn = conectar()
     cursor = conn.cursor()
     
-    # 1. Registra o pedido de saque na tabela de solicitações do administrador
+    # --- BLINDAGEM DO PASSO 4: FORÇA A CRIAÇÃO DA TABELA ANTES DE INSERIR ---
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS saques (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cpf_cliente TEXT,
+        nome_cliente TEXT,
+        valor REAL,
+        chave_pix TEXT,
+        status TEXT,
+        data_pedido TEXT
+    );
+    """)
+    conn.commit()
+    # -----------------------------------------------------------------------
+    
+    # 1. Registra o pedido de saque de forma segura
     cursor.execute(
         "INSERT INTO saques (cpf_cliente, nome_cliente, valor, chave_pix, status, data_pedido) VALUES (?, ?, ?, ?, 'Pendente', datetime('now', 'localtime'))",
-        (cpf, nome, valor, chave_pix)
+        (str(cpf), str(nome), float(valor), str(chave_pix))
     )
     
-    # 2. Deduz o valor solicitado estritamente do Rendimento Líquido do cliente
+    # 2. Deduz o valor diretamente do saldo unificado do cliente (Como combinamos)
     cursor.execute(
-        "UPDATE usuarios SET rendimento = rendimento - ? WHERE cpf = ?",
-        (valor, cpf)
+        "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) - ? WHERE cpf = ?",
+        (float(valor), str(cpf))
     )
     
     conn.commit()
     conn.close()
+
 
 def listar_saques_pendentes():
     conn = conectar()
