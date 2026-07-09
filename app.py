@@ -489,15 +489,21 @@ elif st.session_state.tela_atual == "tela_admin":
                 
                 col_g1, col_g2 = st.columns(2)
                 with col_g1:
-                    # Campo onde você digita o valor do lucro do cliente
                     novo_rendimento = st.number_input("Adicionar Rendimento Líquido (R$):", min_value=0.0, step=10.0, key="add_rend")
                     if st.button("📈 Lançar Rendimento", type="primary", use_container_width=True, key="btn_lancar_rend"):
-                        if hasattr(banco, 'atualizar_rendimento'):
-                            # Envia o novo valor diretamente para a coluna isolada de rendimentos
-                            valor_acumulado = float(usuario_gestao.get('rendimento', 0.0)) + float(novo_rendimento)
-                            banco.atualizar_rendimento(cpf_gestao, valor_acumulado)
-                            st.success("✅ Rendimento lançado com sucesso na coluna isolada!")
+                        if hasattr(banco, 'injetar_lucro_cliente'):
+                            banco.injetar_lucro_cliente(cpf_gestao, novo_rendimento)
+                            st.success("✅ Lucro enviado com sucesso para os rendimentos!")
                             import time; time.sleep(1.5); st.rerun()
+                
+                with col_g2:
+                    valor_liberar = st.number_input("Liberar Capital Retido para Saque (R$):", min_value=0.0, max_value=float(usuario_gestao['saldo']), step=50.0, key="lib_cap")
+                    if st.button("🔓 Autorizar Saque do Aporte", use_container_width=True, key="btn_autorizar_saque"):
+                        if hasattr(banco, 'processar_liberacao_aporte'):
+                            banco.processar_liberacao_aporte(cpf_gestao, valor_liberar)
+                            st.success("✅ Capital transferido para área sacável!")
+                            import time; time.sleep(1.5); st.rerun()
+
                 
                 with col_g2:
                     # Permite ao administrador liberar o capital retido transformando-o em rendimento sacável
