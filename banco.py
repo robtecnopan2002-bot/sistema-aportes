@@ -158,11 +158,10 @@ def aprovar_aporte(id_aporte, cpf, valor, plano):
 
 # --- FUNÇÕES DE SAQUES ---
 def solicitar_saque(cpf, nome, valor, chave_pix):
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    # --- BLINDAGEM DO PASSO 4: FORÇA A CRIAÇÃO DA TABELA ANTES DE INSERIR ---
-    cursor.execute("""
+    # ETAPA 1: Abre uma conexão isolada apenas para garantir que a tabela exista
+    conn_cria = conectar()
+    cursor_cria = conn_cria.cursor()
+    cursor_cria.execute("""
     CREATE TABLE IF NOT EXISTS saques (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cpf_cliente TEXT,
@@ -173,23 +172,28 @@ def solicitar_saque(cpf, nome, valor, chave_pix):
         data_pedido TEXT
     );
     """)
-    conn.commit()
-    # -----------------------------------------------------------------------
+    conn_cria.commit()
+    conn_cria.close()
     
-    # 1. Registra o pedido de saque de forma segura
-    cursor.execute(
+    # ETAPA 2: Abre uma nova conexão limpa para registrar o saque e atualizar o saldo
+    conn_dados = conectar()
+    cursor_dados = conn_dados.cursor()
+    
+    # Registra o pedido de resgate
+    cursor_dados.execute(
         "INSERT INTO saques (cpf_cliente, nome_cliente, valor, chave_pix, status, data_pedido) VALUES (?, ?, ?, ?, 'Pendente', datetime('now', 'localtime'))",
         (str(cpf), str(nome), float(valor), str(chave_pix))
     )
     
-    # 2. Deduz o valor diretamente do saldo unificado do cliente (Como combinamos)
-    cursor.execute(
+    # Deduz o valor do saldo principal
+    cursor_dados.execute(
         "UPDATE usuarios SET saldo = COALESCE(saldo, 0.0) - ? WHERE cpf = ?",
         (float(valor), str(cpf))
     )
     
-    conn.commit()
-    conn.close()
+    conn_dados.commit()
+    conn_dados.close()
+
 
 
 def listar_saques_pendentes():
