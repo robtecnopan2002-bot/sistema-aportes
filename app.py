@@ -320,8 +320,13 @@ elif st.session_state.tela_atual == "tela_admin":
                     """
                     st.markdown(texto_detalhes, unsafe_allow_html=True)
                     
-                    # Botões de ação alinhados lado a lado de forma compacta
-                    col_b1, col_b2, col_espaco = st.columns([1, 1, 4])
+                    # Criando chaves de controle na memória para a caixa de motivo de recusa
+                    chave_recusa = f"escrever_recusa_{usr.get('cpf')}"
+                    if chave_recusa not in st.session_state:
+                        st.session_state[chave_recusa] = False
+
+                    # Botões de ação alinhados lado a lado
+                    col_b1, col_b2, col_espaco = st.columns()
                     with col_b1:
                         if st.button("✔️ Aceitar", key=f"ac_{usr.get('cpf')}", type="primary", use_container_width=True):
                             if hasattr(banco, 'aprovar_usuario'):
@@ -330,10 +335,41 @@ elif st.session_state.tela_atual == "tela_admin":
                                 st.rerun()
                     with col_b2:
                         if st.button("❌ Recusar", key=f"rc_{usr.get('cpf')}", use_container_width=True):
-                            if hasattr(banco, 'reprovar_usuario'):
-                                banco.reprovar_usuario(usr.get('cpf'))
-                                st.warning("Recusado!")
+                            st.session_state[chave_recusa] = True  # Ativa a caixa de texto na tela
+
+                    # Se o botão recusar for clicado, abre a caixa de mensagem personalizada (Passo 4 - UX)
+                    if st.session_state[chave_recusa]:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        motivo_email = st.text_area(
+                            f"Escreva o motivo da recusa para {usr.get('nome')} (Será enviado ao e-mail: {usr.get('email')}):",
+                            key=f"txt_motivo_{usr.get('cpf')}",
+                            placeholder="Ex: Prezado cliente, seu cadastro foi recusado pois o comprovante anexado está ilegível. Por favor, refaça o envio."
+                        )
+                        
+                        col_env1, col_env2 = st.columns(2)
+                        with col_env1:
+                            if st.button("✉️ Confirmar e Enviar E-mail", key=f"conf_rc_{usr.get('cpf')}", type="primary"):
+                                if not motivo_email.strip():
+                                    st.error("⚠️ Você precisa escrever o motivo antes de confirmar.")
+                                else:
+                                    # 1. Executa a recusa no banco de dados
+                                    if hasattr(banco, 'reprovar_usuario'):
+                                        banco.reprovar_usuario(usr.get('cpf'))
+                                    
+                                    # 2. Envio Simulado do E-mail (Aparece no Log / Sucesso)
+                                    print(f"--- ENVIANDO E-MAIL PARA: {usr.get('email')} ---")
+                                    print(f"Mensagem: {motivo_email}")
+                                    
+                                    st.success(f"✅ Notificação enviada para {usr.get('email')} e cadastro recusado!")
+                                    st.session_state[chave_recusa] = False
+                                    import time
+                                    time.sleep(2)
+                                    st.rerun()
+                        with col_env2:
+                            if st.button("Cancelar", key=f"canc_rc_{usr.get('cpf')}"):
+                                st.session_state[chave_recusa] = False
                                 st.rerun()
+
                 st.markdown("<br>", unsafe_allow_html=True)
 
                 
