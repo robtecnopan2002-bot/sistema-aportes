@@ -97,16 +97,39 @@ elif st.session_state.tela_atual == "tela_2":
         cad_cep = st.text_input("CEP", key="reg_cep")
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
-        if st.button("Finalizar Meu Cadastro", type="secondary"):
+     if st.button("Finalizar Meu Cadastro", type="secondary"):
+            # 1. Limpeza dos dados para validação numérica
+            cpf_limpo = "".join(filter(str.isdigit, cad_cpf))
+            tel_limpo = "".join(filter(str.isdigit, cad_tel))
+            cep_limpo = "".join(filter(str.isdigit, cad_cep))
+
+            # 2. Execução dos testes de validação do Passo 4
             if not (cad_nome and cad_cpf and cad_tel and cad_cep and cad_email and cad_senha):
-                st.error("⚠️ Preencha todos os campos.")
+                st.error("⚠️ Preencha todos os campos obrigatórios.")
+                
+            elif len(cpf_limpo) != 11:
+                st.error("❌ CPF inválido. O campo deve conter exatamente 11 números.")
+                
+            elif len(tel_limpo) < 10 or len(tel_limpo) > 11:
+                st.error("❌ Telefone inválido. Insira o DDD + número (ex: 11999999999).")
+                
+            elif len(cep_limpo) != 8:
+                st.error("❌ CEP inválido. O campo deve conter exatamente 8 números.")
+                
+            elif "@" not in cad_email or "." not in cad_email.split("@")[-1]:
+                st.error("❌ E-mail inválido. Digite um formato correto (ex: nome@email.com).")
+                
+            elif len(cad_senha) < 6:
+                st.error("❌ Senha muito curta. Crie uma senha com no mínimo 6 caracteres para sua segurança.")
+                
             else:
-                # NOVO: Grava o novo usuário de forma permanente
-                sucesso = banco.cadastrar_usuario(cad_nome, cad_cpf, cad_tel, cad_cep, cad_email, cad_senha)
+                # Se passar em todas as validações, envia os dados limpos para o banco
+                sucesso = banco.cadastrar_usuario(cad_nome, cpf_limpo, tel_limpo, cep_limpo, cad_email, cad_senha)
                 if sucesso:
-                    st.success("✅ Cadastro realizado! Aguarde o aceite do administrador no painel.")
+                    st.success("✅ Cadastro realizado com sucesso! Aguarde o aceite do administrador no painel.")
                 else:
-                    st.warning("⚠️ CPF já registrado.")
+                    st.warning("⚠️ Este CPF já está registrado no sistema.")
+
                 
     st.markdown("---")
     if st.button("← Voltar para a Tela Inicial"):
