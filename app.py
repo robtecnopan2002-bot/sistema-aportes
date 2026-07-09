@@ -26,13 +26,19 @@ PLANOS = {
 # --- PASSO 4: IDENTIDADE VISUAL RCB APORTES ---
 st.markdown(
     """
-    <style>
+        <style>
     .stApp { background-color: #031430; }
     .titulo-logo { font-family: 'Georgia', serif; font-size: 46px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px; }
     .subtitulo-logo { font-family: 'Arial', sans-serif; font-size: 16px; font-weight: bold; color: #B59453; letter-spacing: 4px; margin-top: -10px; margin-bottom: 30px; }
     div.stButton > button:first-child { background-color: #B59453; color: #031430; font-weight: bold; border-radius: 8px; border: none; }
     div.stButton > button:first-child:hover { background-color: #94763E; color: #FFFFFF; border: none; }
+    
+    /* NOVA REGRA: Força todos os textos normais, parágrafos e subtítulos a ficarem brancos */
+    .stApp h2, .stApp h3, .stApp p, .stApp span, .stApp label {
+        color: #FFFFFF !important;
+    }
     </style>
+
     """,
     unsafe_allow_html=True
 )
