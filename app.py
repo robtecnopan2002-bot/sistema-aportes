@@ -289,22 +289,16 @@ elif st.session_state.tela_atual == "tela_4":
     tamanho_valor = f"{len(valor_formatado):02d}"
     
     # String dinâmica contendo a sua conta, o valor exato do plano e o nome identificador
-          st.text_area(
-        "Chave Pix Copia e Cola (Clique para copiar e pagar):", 
-        value=chave_copia_cola, 
-        height=90, 
-        key="pix_copia_cola_final"
-    )
-    st.markdown("---")
-    
-    if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True, key="btn_confirmar_pgto"):
-        banco.solicitar_aporte(cpf_cliente, nome_cliente, plano, valor)
-        st.success("✅ Notificação de pagamento enviada!")
-        time.sleep(2)
-        navegar_para("tela_3")
-        
-    if st.button("← Mudar de Plano", key="btn_mudar_plano_pgto"):
-        navegar_para("tela_3")
+st.text_area("Chave Pix Copia e Cola (Clique para copiar e pagar):", value=chave_copia_cola, height=90, key="pix_copia_cola_final")
+st.markdown("---")
+if st.button("Confirmar que realizei o pagamento", type="primary", use_container_width=True, key="btn_confirmar_pgto"):
+    banco.solicitar_aporte(cpf_cliente, nome_cliente, plano, valor)
+    st.success("✅ Notificação de pagamento enviada!")
+    time.sleep(2)
+    navegar_para("tela_3")
+if st.button("← Mudar de Plano", key="btn_mudar_plano_pgto"):
+    navegar_para("tela_3")
+
 
 
 
