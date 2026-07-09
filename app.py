@@ -256,7 +256,7 @@ elif st.session_state.tela_atual == "tela_4":
     nome_cliente = user_cliente["nome"]
     
     # 1. GERADOR DINÂMICO DE PIX DA SUA CONTA (Calculado Primeiro)
-    minha_chave_real = st.secrets.get("CHAVE_PIX_RECEBIMENTO", "suachave@exemplo.com")
+    minha_chave_real = st.secrets.get("CHAVE_PIX_RECEBIMENTO", "robtecnopan2004@gmail.com")
     tamanho_chave = f"{len(minha_chave_real):02d}"
     valor_formatado = f"{valor:.2f}"
     tamanho_valor = f"{len(valor_formatado):02d}"
