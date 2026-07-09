@@ -353,19 +353,44 @@ elif st.session_state.tela_atual == "tela_admin":
                                 if not motivo_email.strip():
                                     st.error("⚠️ Você precisa escrever o motivo antes de confirmar.")
                                 else:
-                                    # 1. Executa a recusa no banco de dados
-                                    if hasattr(banco, 'reprovar_usuario'):
-                                        banco.reprovar_usuario(usr.get('cpf'))
+                                    # Configurações do seu e-mail emissor
+                                    EMAIL_REMETENTE = "seu_email@gmail.com"
+                                    SENHA_EMISSOR = "sua_senha_de_app"  # Senha de App de 16 dígitos
                                     
-                                    # 2. Envio Simulado do E-mail (Aparece no Log / Sucesso)
-                                    print(f"--- ENVIANDO E-MAIL PARA: {usr.get('email')} ---")
-                                    print(f"Mensagem: {motivo_email}")
+                                    import smtplib
+                                    from email.mime.text import MIMEText
+                                    from email.mime.multipart import MIMEMultipart
                                     
-                                    st.success(f"✅ Notificação enviada para {usr.get('email')} e cadastro recusado!")
-                                    st.session_state[chave_recusa] = False
-                                    import time
-                                    time.sleep(2)
-                                    st.rerun()
+                                    try:
+                                        # 1. Montagem do corpo do e-mail estruturado (Passo 4)
+                                        msg = MIMEMultipart()
+                                        msg['From'] = EMAIL_REMETENTE
+                                        msg['To'] = usr.get('email')
+                                        msg['Subject'] = "RCB Aportes - Atualização do Status de Cadastro"
+                                        
+                                        corpo_mensagem = f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
+                                        msg.attach(MIMEText(corpo_mensagem, 'plain'))
+                                        
+                                        # 2. Conexão segura com o servidor do Gmail (porta 587)
+                                        server = smtplib.SMTP('://gmail.com', 587)
+                                        server.starttls()
+                                        server.login(EMAIL_REMETENTE, SENHA_EMISSOR)
+                                        server.sendmail(EMAIL_REMETENTE, usr.get('email'), msg.as_string())
+                                        server.quit()
+                                        
+                                        # 3. Executa a recusa no banco de dados após o sucesso do e-mail
+                                        if hasattr(banco, 'reprovar_usuario'):
+                                            banco.reprovar_usuario(usr.get('cpf'))
+                                            
+                                        st.success(f"✅ Notificação enviada com sucesso para {usr.get('email')}!")
+                                        st.session_state[chave_recusa] = False
+                                        import time
+                                        time.sleep(2)
+                                        st.rerun()
+                                        
+                                    except Exception as e:
+                                        st.error(f"❌ Falha ao enviar o e-mail real: {e}. O usuário não foi removido.")
+
                         with col_env2:
                             if st.button("Cancelar", key=f"canc_rc_{usr.get('cpf')}"):
                                 st.session_state[chave_recusa] = False
