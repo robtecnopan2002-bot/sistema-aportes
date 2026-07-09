@@ -353,19 +353,27 @@ elif st.session_state.tela_atual == "tela_admin":
                                 if not motivo_email.strip():
                                     st.error("⚠️ Você precisa escrever o motivo antes de confirmar.")
                                 else:
-                                    import resend
-                                    
-                                    # Configura sua chave de acesso segura da Resend
-                                    resend.api_key = "re_dgFDAfPn_P6ufY2Nr9Dqk7BpJLbFqAwyg"
+                                    import urllib.request
+                                    import json
                                     
                                     try:
-                                        # 1. Envia o e-mail via protocolo HTTP (Aceito pelo Streamlit Cloud)
-                                        r = resend.Emails.send({
-                                            "from": "onboarding@resend.dev",  # Remetente padrão gratuito de teste
+                                        # 1. Envio de e-mail via HTTP Nativo (Não requer instalação de pacotes)
+                                        url_email = "https://resend.com"
+                                        dados_payload = json.dumps({
+                                            "from": "onboarding@resend.dev",
                                             "to": usr.get('email'),
                                             "subject": "RCB Aportes - Atualização do Status de Cadastro",
                                             "text": f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
-                                        })
+                                        }).encode('utf-8')
+                                        
+                                        # Cria a requisição injetando o Token de Acesso diretamente nos cabeçalhos
+                                        req_email = urllib.request.Request(url_email, data=dados_payload, method='POST')
+                                        req_email.add_header('Authorization', 'Bearer SUA_CHAVE_API_RESEND') # Substitua pelo seu token re_...
+                                        req_email.add_header('Content-Type', 'application/json')
+                                        
+                                        with urllib.request.urlopen(req_email, timeout=5) as response_email:
+                                            pass  # Sucesso no envio
+
                                         
                                         # 3. Executa a recusa no banco de dados com segurança
                                         if hasattr(banco, 'reprovar_usuario'):
