@@ -357,22 +357,28 @@ elif st.session_state.tela_atual == "tela_admin":
                                     import json
                                     
                                     try:
-                                        # 1. Envio de e-mail via HTTP Nativo (Não requer instalação de pacotes)
-                                        url_email = "https://resend.com"
-                                        dados_payload = json.dumps({
-                                            "from": "onboarding@resend.dev",
-                                            "to": usr.get('email'),
+                                        # 1. Configurações de envio via API estável da Brevo
+                                        url_email = "https://brevo.com"
+                                        
+                                        payload_dados = {
+                                            "sender": {"name": "RCB Aportes", "email": "robtecnopan2002@gmail.com"},
+                                            "to": [{"email": usr.get('email'), "name": usr.get('nome')}],
                                             "subject": "RCB Aportes - Atualização do Status de Cadastro",
-                                            "text": f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
-                                        }).encode('utf-8')
+                                            "textContent": f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
+                                        }
                                         
-                                        # Cria a requisição injetando o Token de Acesso diretamente nos cabeçalhos
-                                        req_email = urllib.request.Request(url_email, data=dados_payload, method='POST')
-                                        req_email.add_header('Authorization', 'Bearer SUA_CHAVE_API_RESEND') # Substitua pelo seu token re_...
+                                        dados_finais = json.dumps(payload_dados).encode('utf-8')
+                                        
+                                        # 2. Criação da requisição nativa compatível com Streamlit Cloud
+                                        req_email = urllib.request.Request(url_email, data=dados_finais)
+                                        # Puxa a chave de forma oculta e segura do painel do Streamlit
+                                        req_email.add_header('api-key', st.secrets["CHAVE_BREVO"])
                                         req_email.add_header('Content-Type', 'application/json')
+                                        req_email.add_header('Accept', 'application/json')
                                         
-                                        with urllib.request.urlopen(req_email, timeout=5) as response_email:
-                                            pass  # Sucesso no envio
+                                        with urllib.request.urlopen(req_email, timeout=5) as resposta:
+                                            pass  # Entrega realizada com sucesso
+
 
                                         
                                         # 3. Executa a recusa no banco de dados com segurança
