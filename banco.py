@@ -1,6 +1,8 @@
 import sqlite3
 
-DB_NAME = "sistema_financeiro.db"
+# ALTERAÇÃO DO PASSO 4: Força a nuvem a criar um banco totalmente novo e limpo
+DB_NAME = "sistema_v2.db"
+
 
 def conectar():
     """Conecta ao banco de dados SQLite e corrige saldos nulos."""
