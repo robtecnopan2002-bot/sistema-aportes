@@ -14,7 +14,7 @@ if "plano_selecionado" not in st.session_state:
 if "valor_selecionado" not in st.session_state:
     st.session_state.valor_selecionado = 0.0
 
-SENHA_MESTRE_ADMIN = "admin123"
+SENHA_MESTRE_ADMIN = "admin993412"
 
 PLANOS = {
     "Cobre": 300.00,
