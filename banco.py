@@ -149,10 +149,19 @@ def aprovar_aporte(id_aporte, cpf, valor, plano):
 def solicitar_saque(cpf, nome, valor, chave_pix):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO saques (cpf, nome, valor, chave_pix, status)
-        VALUES (?, ?, ?, ?, 'Pendente')
-    """, (cpf, nome, valor, chave_pix))
+    
+    # 1. Registra o pedido de saque na tabela de solicitações do administrador
+    cursor.execute(
+        "INSERT INTO saques (cpf_cliente, nome_cliente, valor, chave_pix, status, data_pedido) VALUES (?, ?, ?, ?, 'Pendente', datetime('now', 'localtime'))",
+        (cpf, nome, valor, chave_pix)
+    )
+    
+    # 2. Deduz o valor solicitado estritamente do Rendimento Líquido do cliente
+    cursor.execute(
+        "UPDATE usuarios SET rendimento = rendimento - ? WHERE cpf = ?",
+        (valor, cpf)
+    )
+    
     conn.commit()
     conn.close()
 
