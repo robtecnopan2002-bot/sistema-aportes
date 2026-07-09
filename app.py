@@ -283,10 +283,12 @@ elif st.session_state.tela_atual == "tela_3":
                 unsafe_allow_html=True
             )
             
-            if v_rend <= 0:
-                st.info("👋 Seu rendimento disponível para saque imediato está zerado. Para resgatar o Capital Aportado antes do prazo, entre em contato com o suporte para solicitar a autorização do administrador.")
+            # Ajustado para usar o v_saldo unificado com os rendimentos somados
+            if v_saldo <= 0:
+                st.info("👋 Seu saldo disponível está zerado. Para solicitar resgates ou aportes, consulte o seu gerente de contas.")
             else:
-                valor_saque = st.number_input("Valor do saque (R$)", min_value=1.0, max_value=float(v_rend), step=10.0, key="num_saque_final_real")
+                valor_saque = st.number_input("Valor do saque (R$)", min_value=1.0, max_value=float(v_saldo), step=10.0, key="num_saque_final_real")
+
                 chave_pix_saque = st.text_input("Informe sua Chave PIX para recebimento:", key="txt_pix_saque_final_real")
                 
                 if st.button("Confirmar Pedido de Saque", type="primary", key="btn_confirmar_saque_real_final"):
