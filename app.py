@@ -252,9 +252,6 @@ elif st.session_state.tela_atual == "tela_3":
             st.markdown("---")
             
         with tab_solicitar_saque:
-            rendimento_disponivel = user.get("rendimento", 0.0)
-            valor_retido = user.get("saldo", 0.0)
-            
             st.markdown(
                 f"""
                 <div style="background-color: #081F42; padding: 15px; border-radius: 8px; border-left: 5px solid #B59453; margin-bottom: 20px;">
@@ -268,30 +265,20 @@ elif st.session_state.tela_atual == "tela_3":
                 unsafe_allow_html=True
             )
             
-            col_saque1, col_saque2 = st.columns(2)
-            with col_saque1:
-                st.metric(label="📈 Rendimento Liberado", value=f"R$ {rendimento_disponivel:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            with col_saque2:
-                st.metric(label="🔒 Capital Aportado (Retido)", value=f"R$ {valor_retido:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.markdown("---")
-            
-            if rendimento_disponivel <= 0 and valor_retido <= 0:
-                st.warning("Você não possui saldo ou rendimentos no sistema.")
-            elif rendimento_disponivel <= 0:
+            if v_rend <= 0:
                 st.info("👋 Seu rendimento disponível para saque imediato está zerado. Para resgatar o Capital Aportado antes do prazo, entre em contato com o suporte para solicitar a autorização do administrador.")
             else:
-                valor_saque = st.number_input("Valor do saque (R$)", min_value=1.0, max_value=float(rendimento_disponivel), step=10.0)
-                chave_pix_saque = st.text_input("Informe sua Chave PIX para recebimento:")
+                valor_saque = st.number_input("Valor do saque (R$)", min_value=1.0, max_value=float(v_rend), step=10.0, key="num_saque_final_real")
+                chave_pix_saque = st.text_input("Informe sua Chave PIX para recebimento:", key="txt_pix_saque_final_real")
                 
-                if st.button("Confirmar Pedido de Saque", type="primary", key="btn_confirmar_saque_real"):
+                if st.button("Confirmar Pedido de Saque", type="primary", key="btn_confirmar_saque_real_final"):
                     if not chave_pix_saque.strip():
                         st.error("⚠️ Por favor, informe sua Chave PIX para continuar.")
                     else:
-                        banco.solicitar_saque(cpf, user["nome"], valor_saque, chave_pix_saque)
+                        banco.solicitar_saque(cpf, user[0] if isinstance(user, (list, tuple)) else user.get('nome', ''), valor_saque, chave_pix_saque)
                         st.success(f"✅ Solicitação de saque de R$ {valor_saque:,.2f} enviada para processamento!")
-                        import time
-                        time.sleep(1.5)
-                        st.rerun()
+                        import time; time.sleep(1.5); st.rerun()
+
 
 
         
