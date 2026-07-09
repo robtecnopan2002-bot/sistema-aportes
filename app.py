@@ -23,14 +23,29 @@ PLANOS = {
     "Ouro": 3000.00,
     "Diamante": 5000.00
 }
-
+# --- PASSO 4: IDENTIDADE VISUAL RCB APORTES ---
+st.markdown(
+    """
+    <style>
+    .stApp { background-color: #031430; }
+    .titulo-logo { font-family: 'Georgia', serif; font-size: 46px; font-weight: bold; color: #FFFFFF; margin-bottom: 0px; }
+    .subtitulo-logo { font-family: 'Arial', sans-serif; font-size: 16px; font-weight: bold; color: #B59453; letter-spacing: 4px; margin-top: -10px; margin-bottom: 30px; }
+    div.stButton > button:first-child { background-color: #B59453; color: #031430; font-weight: bold; border-radius: 8px; border: none; }
+    div.stButton > button:first-child:hover { background-color: #94763E; color: #FFFFFF; border: none; }
+    </style>
+    """,
+    unsafe_replace_html=True
+)
 def navegar_para(nova_tela):
     st.session_state.tela_atual = nova_tela
     st.rerun()
 
 # --- TELA 1: VISUALIZAÇÃO DO PRODUTO ---
 if st.session_state.tela_atual == "tela_1":
-    st.title("🚀 Rendimento Financeiro Automatizado")
+    # Cabeçalho RCB Aportes estilizado
+    st.markdown('<p class="titulo-logo">RCB</p>', unsafe_replace_html=True)
+    st.markdown('<p class="subtitulo-logo">APORTES</p>', unsafe_replace_html=True)
+    
     st.subheader("Multiplique seu capital diariamente")
     st.markdown("---")
     st.metric(label="📊 Lucros Diários Estimados", value="0,1% a 1,0% ao dia")
