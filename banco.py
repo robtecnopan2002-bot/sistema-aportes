@@ -189,7 +189,17 @@ def aplicar_rendimento_manual(cpf, porcentagem):
         SET saldo = saldo * ? 
         WHERE cpf = ?
     """, (fator_multiplicador, cpf))
+    # --- ATUALIZAÇÃO AUTOMÁTICA DO PASSO 4 (ADICIONA COLUNA RENDIMENTO SE NÃO EXISTIR) ---
+    try:
+        cursor.execute("ALTER TABLE usuarios ADD COLUMN rendimento REAL DEFAULT 0.0;")
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Se a coluna já existir, o SQLite gera um erro amigável e o Python apenas ignora
+        pass
+    # ----------------------------------------------------------------------------------
+
     conn.commit()
     conn.close()
+
 
 
