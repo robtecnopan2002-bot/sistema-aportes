@@ -367,15 +367,17 @@ elif st.session_state.tela_atual == "tela_admin":
                                             "text": f"Prezado(a) {usr.get('nome')},\n\nInformamos que seu pedido de cadastro no sistema RCB Aportes não pôde ser aprovado neste momento pelo seguinte motivo:\n\n{motivo_email}\n\nAtenciosamente,\nEquipe de Suporte RCB Aportes"
                                         })
                                         
-                                        # 2. Executa a recusa no banco de dados após o sucesso do envio
+                                        # 3. Executa a recusa no banco de dados com segurança
                                         if hasattr(banco, 'reprovar_usuario'):
                                             banco.reprovar_usuario(usr.get('cpf'))
                                             
-                                        st.success(f"✅ Notificação enviada via API para {usr.get('email')}!")
+                                        # Desativa a caixa de texto e deixa o Streamlit atualizar sozinho
                                         st.session_state[chave_recusa] = False
-                                        import time
-                                        time.sleep(2)
-                                        st.rerun()
+                                        st.success(f"✅ Cadastro de {usr.get('nome')} recusado e e-mail enviado!")
+                                        
+                                        # Cria um botão de atualização manual seguro para o administrador limpar a tela
+                                        st.button("🔄 Atualizar Lista de Clientes", type="primary", key=f"btn_up_{usr.get('cpf')}")
+
                                         
                                     except Exception as e:
                                         st.error(f"❌ Falha no envio pela nuvem: {e}. O usuário foi mantido para nova tentativa.")
