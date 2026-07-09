@@ -108,11 +108,13 @@ elif st.session_state.tela_atual == "tela_2":
                 dados_cep = pycep_correios.get_address_from_cep(cep_limpo_busca)
                 st.session_state.end_salvo = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('cidade', '')}/{dados_cep.get('uf', '')}"
                 st.success(f"📍 **Endereço:** {st.session_state.end_salvo}")
-            except:
+            except Exception:
                 st.error("❌ CEP não encontrado ou instabilidade no sistema postal.")
                 st.session_state.end_salvo = ""
         else:
             st.session_state.end_salvo = ""
+        # --------------------------------------------
+
         # --------------------------------------------
 
             except:
