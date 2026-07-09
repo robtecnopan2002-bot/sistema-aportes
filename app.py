@@ -94,9 +94,31 @@ elif st.session_state.tela_atual == "tela_2":
         cad_nome = st.text_input("Nome Completo", key="reg_nome")
         cad_cpf = st.text_input("CPF (Apenas números)", key="reg_cpf")
         cad_tel = st.text_input("Telefone com DDD", key="reg_tel")
-        cad_cep = st.text_input("CEP", key="reg_cep")
+        
+        # --- BUSCA AUTOMÁTICA DE CEP ---
+        cad_cep = st.text_input("CEP (Apenas números)", key="reg_cep")
+        endereco_auto = ""
+        
+        cep_limpo_busca = "".join(filter(str.isdigit, cad_cep))
+        if len(cep_limpo_busca) == 8:
+            import urllib.request
+            import json
+            try:
+                url = f"https://viacep.com.br{cep_limpo_busca}/json/"
+                with urllib.request.urlopen(url) as response:
+                    dados_cep = json.loads(response.read().decode())
+                if "erro" not in dados_cep:
+                    endereco_auto = f"{dados_cep.get('logradouro', '')}, {dados_cep.get('bairro', '')} - {dados_cep.get('localidade', '')}/{dados_cep.get('uf', '')}"
+                    st.info(f"📍 **Endereço Encontrado:** {endereco_auto}")
+                else:
+                    st.error("❌ CEP não encontrado na base de dados.")
+            except:
+                pass
+        # -------------------------------
+
         cad_email = st.text_input("E-mail", key="reg_email")
         cad_senha = st.text_input("Crie uma Senha", type="password", key="reg_senha")
+
         if st.button("Finalizar Meu Cadastro", type="secondary"):
             cpf_limpo = "".join(filter(str.isdigit, cad_cpf))
             tel_limpo = "".join(filter(str.isdigit, cad_tel))
