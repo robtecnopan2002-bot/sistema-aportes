@@ -48,10 +48,11 @@ def navegar_para(nova_tela):
 
 # --- TELA 1: VISUALIZAÇÃO DO PRODUTO ---
 if st.session_state.tela_atual == "tela_1":
-    # NOVA LINHA: Adiciona o logotipo centralizado com tamanho ideal de 300 pixels
-    st.image("https://githubusercontent.com", width=300)
+    # Adiciona o logotipo oficial da RCB centralizado na tela
+    st.image("Logo RCB Investimentos (4).jpg", width=350)
     
     st.subheader("Multiplique seu capital diariamente")
+
 
     st.markdown("---")
     st.metric(label="📊 Lucros Diários Estimados", value="0,1% a 1,0% ao dia")
