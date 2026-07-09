@@ -3,8 +3,17 @@ import sqlite3
 DB_NAME = "sistema_financeiro.db"
 
 def conectar():
-    """Conecta ao banco de dados SQLite."""
-    return sqlite3.connect(DB_NAME)
+    """Conecta ao banco de dados SQLite e corrige saldos nulos."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        # Preenche com 0.0 qualquer conta antiga que esteja com o rendimento nulo/vazio
+        cursor.execute("UPDATE usuarios SET rendimento = 0.0 WHERE rendimento IS NULL;")
+        conn.commit()
+    except Exception:
+        pass
+    return conn
+
 
 def inicializar_banco():
     """Cria as tabelas necessárias se elas não existirem."""
