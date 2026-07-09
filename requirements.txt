@@ -1,1 +1,2 @@
 pycep-correios==5.0.0
+re_dgFDAfPn_P6ufY2Nr9Dqk7BpJLbFqAwyg
