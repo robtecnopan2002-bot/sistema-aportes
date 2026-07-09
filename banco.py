@@ -38,34 +38,22 @@ def inicializar_banco():
         )
     """)
     
-    # Tabela de Aportes (Telas 4 e 6)
+    # --- CRIAÇÃO DA TABELA DE SAQUES (PASSO 4 - CORREÇÃO DEFINITIVA) ---
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS aportes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cpf TEXT,
-            nome TEXT,
-            plano TEXT,
-            valor REAL,
-            status TEXT DEFAULT 'Pendente',
-            FOREIGN KEY (cpf) REFERENCES usuarios (cpf)
-        )
-    """)
-    
-    # Tabela de Saques (Telas 3 e 7)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS saques (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cpf TEXT,
-            nome TEXT,
-            valor REAL,
-            chave_pix TEXT,
-            status TEXT DEFAULT 'Pendente',
-            FOREIGN KEY (cpf) REFERENCES usuarios (cpf)
-        )
+    CREATE TABLE IF NOT EXISTS saques (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cpf_cliente TEXT,
+        nome_cliente TEXT,
+        valor REAL,
+        chave_pix TEXT,
+        status TEXT,
+        data_pedido TEXT
+    );
     """)
     
     conn.commit()
     conn.close()
+
 
 # --- FUNÇÕES DE USUÁRIOS ---
 def cadastrar_usuario(nome, cpf, telefone, cep, email, senha):
