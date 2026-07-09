@@ -289,7 +289,7 @@ elif st.session_state.tela_atual == "tela_4":
     tamanho_valor = f"{len(valor_formatado):02d}"
     
     # String dinâmica contendo a sua conta, o valor exato do plano e o nome identificador
-           st.text_area(
+          st.text_area(
         "Chave Pix Copia e Cola (Clique para copiar e pagar):", 
         value=chave_copia_cola, 
         height=90, 
@@ -305,6 +305,7 @@ elif st.session_state.tela_atual == "tela_4":
         
     if st.button("← Mudar de Plano", key="btn_mudar_plano_pgto"):
         navegar_para("tela_3")
+
 
 
 # --- PAINEL DO ADMINISTRADOR (TELAS 5, 6 e 7 + RENDIMENTOS MANUAIS) ---
