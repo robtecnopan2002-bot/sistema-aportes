@@ -98,9 +98,15 @@ class AplicativoRCB(ctk.CTk):
         # DIRETÓRIO ABSOLUTO: Garante que todo o sistema use rigorosamente o mesmo arquivo
         # ------------------------------------------------------------------
         diretorio_atual = os.path.dirname(os.path.abspath(__file__))
-        caminho_planilha = os.path.join(diretorio_atual, "clientes_cadastro.xlsx") 
-        # Nota: Se o seu arquivo principal ficar em outra pasta (ex: 'dados/clientes.xlsx'), 
-        # mude a linha acima para: os.path.join(diretorio_atual, "dados", "clientes.xlsx")
+        # Se o arquivo estiver dentro de uma subpasta (como 'admin' ou 'telas'), 
+        # subimos um nível para ir para a raiz do projeto FIN-APORT-2026-OK
+        if os.path.basename(diretorio_atual) in ["admin", "telas", "views", "src"]:
+            raiz_projeto = os.path.dirname(diretorio_atual)
+        else:
+            raiz_projeto = diretorio_atual
+
+        # Centraliza a planilha na raiz global do projeto
+        caminho_planilha = os.path.join(raiz_projeto, "clientes_cadastro.xlsx")
         # ------------------------------------------------------------------
 
         try:
