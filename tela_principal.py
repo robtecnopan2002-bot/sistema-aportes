@@ -82,60 +82,70 @@ class AplicativoRCB(ctk.CTk):
         )
         self.btn_salvar.pack(pady=20, padx=40, fill="x")
 
-        def acao_salvar_aporte(self):
+    def acao_salvar_aporte(self):
         import pandas as pd
         from tkinter import messagebox
         import os
 
-        # 1. Captura e limpa espaços extras do texto digitado
         cliente_procurado = self.entry_cliente.get().strip()
         valor_aporte = self.entry_valor.get().strip()
 
         if not cliente_procurado:
-            messagebox.showwarning("Aviso", "Por favor, digite o nome do cliente!")
+            messagebox.showwarning("Aviso", "Digite o nome do cliente!")
             return
 
-        caminho_planilha = "clientes_cadastro.xlsx"  # Ajuste para o seu arquivo real
+        # ------------------------------------------------------------------
+        # DIRETÓRIO ABSOLUTO: Garante que todo o sistema use rigorosamente o mesmo arquivo
+        # ------------------------------------------------------------------
+        diretorio_atual = os.path.dirname(os.path.abspath(__file__))
+        caminho_planilha = os.path.join(diretorio_atual, "clientes_cadastro.xlsx") 
+        # Nota: Se o seu arquivo principal ficar em outra pasta (ex: 'dados/clientes.xlsx'), 
+        # mude a linha acima para: os.path.join(diretorio_atual, "dados", "clientes.xlsx")
+        # ------------------------------------------------------------------
 
         try:
             if not os.path.exists(caminho_planilha):
-                messagebox.showerror("Erro", f"Planilha '{caminho_planilha}' não encontrada!")
+                messagebox.showerror("Erro", f"Arquivo não encontrado em:\n{caminho_planilha}")
                 return
 
-            # 2. Carrega a planilha
+            # Carrega a base real
             df = pd.read_excel(caminho_planilha)
 
-            # 3. NORMALIZAÇÃO PARA VALIDAÇÃO (Garante que espaços ou maiúsculas não quebrem a busca)
-            # Cria cópias temporárias em minúsculo e sem espaços para comparar com segurança
-            cliente_busca_limpo = cliente_procurado.lower()
-            coluna_cliente_limpa = df['Cliente'].astype(str).str.strip().str.lower()
+            # Normalização rigorosa das colunas
+            df['Cliente'] = df['Cliente'].astype(str).str.strip()
+            df['Status'] = df['Status'].astype(str).str.strip()
 
-            # 4. Procura o cliente na lista normalizada
-            if cliente_busca_limpo in coluna_cliente_limpa.values:
+            # Localiza por correspondência sem diferenciar maiúsculas/minúsculas
+            sub_coluna = df['Cliente'].str.lower()
+            
+            if cliente_procurado.lower() in sub_coluna.values:
+                # Captura o índice real da linha
+                indice = sub_coluna[sub_coluna == cliente_procurado.lower()].index
                 
-                # Encontra a posição (índice) exata da linha na planilha
-                indice_cliente = coluna_cliente_limpa[coluna_cliente_limpa == cliente_busca_limpo].index
-
-                # 5. GRAVAÇÃO FORÇADA (Usa o índice localizado para garantir a alteração)
-                df.loc[indice_cliente, 'Status'] = 'Aprovado'
+                # Altera o status de forma definitiva na memória
+                df.loc[indice, 'Status'] = 'Aprovado'
                 
                 if valor_aporte:
-                    df.loc[indice_cliente, 'Valor'] = valor_aporte
+                    df.loc[indice, 'Valor'] = valor_aporte
 
-                # 6. Salva o arquivo de volta
+                # GRAVAÇÃO FORÇADA: Salva tirando qualquer index fantasma
                 df.to_excel(caminho_planilha, index=False)
 
-                messagebox.showinfo("Sucesso", f"Validação Concluída!\nCliente '{cliente_procurado}' agora é um CLIENTE APROVADO.")
+                # DIAGNÓSTICO RÁPIDO: Abre o arquivo de novo imediatamente para testar se gravou mesmo
+                conferência_df = pd.read_excel(caminho_planilha)
+                status_gravado = conferência_df.loc[indice, 'Status'].values[0]
+
+                if status_gravado == 'Aprovado':
+                    messagebox.showinfo("Sucesso Real", f"Confirmado! '{cliente_procurado}' foi gravado no banco como {status_gravado}.\n\nCaminho físico alterado:\n{caminho_planilha}")
+                else:
+                    messagebox.showerror("Erro de Persistência", "O Python tentou gravar, mas a alteração foi rejeitada pela planilha.")
                 
-                # Limpa os campos
                 self.entry_valor.delete(0, "end")
                 self.entry_cliente.delete(0, "end")
-            
             else:
-                # Se cair aqui, o nome digitado realmente não existe igual na planilha
-                messagebox.showwarning("Não Encontrado", f"O cliente '{cliente_procurado}' não foi localizado.\nVerifique a grafia exata na planilha.")
+                messagebox.showwarning("Aviso", f"Cliente '{cliente_procurado}' não consta na base.")
 
         except PermissionError:
-            messagebox.showerror("Erro de Permissão", "Feche o arquivo Excel antes de dar o aceite!")
+            messagebox.showerror("Erro", "Feche o Excel! O arquivo está bloqueado para escrita.")
         except Exception as e:
-            messagebox.showerror("Erro Crítico", f"Falha na validação: {e}")
+            messagebox.showerror("Erro Crítico", f"Falha no processo: {e}")
