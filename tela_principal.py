@@ -82,8 +82,8 @@ class AplicativoRCB(ctk.CTk):
         )
         self.btn_salvar.pack(pady=20, padx=40, fill="x")
 
-    def acao_salvar_aporte(self):
-        import pandas as pd
+       def acao_salvar_aporte(self):
+        import openpyxl
         from tkinter import messagebox
         import os
 
@@ -91,67 +91,72 @@ class AplicativoRCB(ctk.CTk):
         valor_aporte = self.entry_valor.get().strip()
 
         if not cliente_procurado:
-            messagebox.showwarning("Aviso", "Digite o nome do cliente!")
+            messagebox.showwarning("Aviso", "Por favor, digite o nome do cliente!")
             return
 
-        # ------------------------------------------------------------------
-        # DIRETÓRIO ABSOLUTO: Garante que todo o sistema use rigorosamente o mesmo arquivo
-        # ------------------------------------------------------------------
+        # Caminho direto do arquivo (Ajuste o nome se for diferente)
         diretorio_atual = os.path.dirname(os.path.abspath(__file__))
-        # Se o arquivo estiver dentro de uma subpasta (como 'admin' ou 'telas'), 
-        # subimos um nível para ir para a raiz do projeto FIN-APORT-2026-OK
-        if os.path.basename(diretorio_atual) in ["admin", "telas", "views", "src"]:
-            raiz_projeto = os.path.dirname(diretorio_atual)
-        else:
-            raiz_projeto = diretorio_atual
+        caminho_planilha = os.path.join(diretorio_atual, "clientes_cadastro.xlsx")
 
-        # Centraliza a planilha na raiz global do projeto
-        caminho_planilha = os.path.join(raiz_projeto, "clientes_cadastro.xlsx")
-        # ------------------------------------------------------------------
+        if not os.path.exists(caminho_planilha):
+            messagebox.showerror("Erro", f"Planilha não encontrada em:\n{caminho_planilha}")
+            return
 
         try:
-            if not os.path.exists(caminho_planilha):
-                messagebox.showerror("Erro", f"Arquivo não encontrado em:\n{caminho_planilha}")
+            # 1. Abre o livro do Excel de forma direta
+            wb = openpyxl.load_workbook(caminho_planilha)
+            ws = wb.active  # Pega a aba ativa atual
+
+            # 2. Descobre quais são os cabeçalhos das colunas
+            coluna_cliente_idx = None
+            coluna_status_idx = None
+            coluna_valor_idx = None
+
+            for col in range(1, ws.max_column + 1):
+                nome_coluna = str(ws.cell(row=1, column=col).value).strip().lower()
+                if nome_coluna in ["cliente", "nome", "usuário"]:
+                    coluna_cliente_idx = col
+                elif nome_coluna in ["status", "situação", "aprovacao"]:
+                    coluna_status_idx = col
+                elif nome_coluna in ["valor", "aporte"]:
+                    coluna_valor_idx = col
+
+            if not coluna_cliente_idx or not coluna_status_idx:
+                messagebox.showerror("Erro de Estrutura", "Não achei as colunas 'Cliente' ou 'Status' na linha 1 da planilha!")
+                wb.close()
                 return
 
-            # Carrega a base real
-            df = pd.read_excel(caminho_planilha)
+            # 3. Varre as linhas procurando o cliente (Ignora maiúsculas/minúsculas)
+            cliente_achado = False
+            for linha in range(2, ws.max_row + 1):
+                valor_celula_cliente = str(ws.cell(row=linha, column=coluna_cliente_idx).value).strip()
+                
+                if valor_celula_cliente.lower() == cliente_procurado.lower():
+                    # 4. GRAVAÇÃO DIRETA NA CÉLULA (Modificação física)
+                    ws.cell(row=linha, column=coluna_status_idx).value = "Aprovado"
+                    
+                    if valor_aporte and coluna_valor_idx:
+                        ws.cell(row=linha, column=coluna_valor_idx).value = valor_aporte
+                    
+                    cliente_achado = True
+                    break  # Para o loop pois já achou o cliente
 
-            # Normalização rigorosa das colunas
-            df['Cliente'] = df['Cliente'].astype(str).str.strip()
-            df['Status'] = df['Status'].astype(str).str.strip()
+            if not cliente_achado:
+                messagebox.showwarning("Não Encontrado", f"O cliente '{cliente_procurado}' não existe nesta planilha.")
+                wb.close()
+                return
 
-            # Localiza por correspondência sem diferenciar maiúsculas/minúsculas
-            sub_coluna = df['Cliente'].str.lower()
+            # 5. SALVAMENTO MANDATÓRIO
+            wb.save(caminho_planilha)
+            wb.close()
+
+            messagebox.showinfo("Sucesso Absoluto", f"Status de '{cliente_procurado}' alterado fisicamente para 'Aprovado' na planilha!")
             
-            if cliente_procurado.lower() in sub_coluna.values:
-                # Captura o índice real da linha
-                indice = sub_coluna[sub_coluna == cliente_procurado.lower()].index
-                
-                # Altera o status de forma definitiva na memória
-                df.loc[indice, 'Status'] = 'Aprovado'
-                
-                if valor_aporte:
-                    df.loc[indice, 'Valor'] = valor_aporte
-
-                # GRAVAÇÃO FORÇADA: Salva tirando qualquer index fantasma
-                df.to_excel(caminho_planilha, index=False)
-
-                # DIAGNÓSTICO RÁPIDO: Abre o arquivo de novo imediatamente para testar se gravou mesmo
-                conferência_df = pd.read_excel(caminho_planilha)
-                status_gravado = conferência_df.loc[indice, 'Status'].values[0]
-
-                if status_gravado == 'Aprovado':
-                    messagebox.showinfo("Sucesso Real", f"Confirmado! '{cliente_procurado}' foi gravado no banco como {status_gravado}.\n\nCaminho físico alterado:\n{caminho_planilha}")
-                else:
-                    messagebox.showerror("Erro de Persistência", "O Python tentou gravar, mas a alteração foi rejeitada pela planilha.")
-                
-                self.entry_valor.delete(0, "end")
-                self.entry_cliente.delete(0, "end")
-            else:
-                messagebox.showwarning("Aviso", f"Cliente '{cliente_procurado}' não consta na base.")
+            # Limpa campos
+            self.entry_valor.delete(0, "end")
+            self.entry_cliente.delete(0, "end")
 
         except PermissionError:
-            messagebox.showerror("Erro", "Feche o Excel! O arquivo está bloqueado para escrita.")
+            messagebox.showerror("Erro de Permissão", "O Excel está aberto! Feche o arquivo 'clientes_cadastro.xlsx' antes de clicar no botão.")
         except Exception as e:
-            messagebox.showerror("Erro Crítico", f"Falha no processo: {e}")
+            messagebox.showerror("Erro Gravíssimo", f"O Python foi bloqueado ao salvar: {e}")
