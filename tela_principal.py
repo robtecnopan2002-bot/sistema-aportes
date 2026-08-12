@@ -82,55 +82,57 @@ class AplicativoRCB(ctk.CTk):
         )
         self.btn_salvar.pack(pady=20, padx=40, fill="x")
 
-        def acao_salvar_aporte(self):
+           def acao_salvar_aporte(self):
         import pandas as pd
         from tkinter import messagebox
         import os
 
-        # 1. Captura os dados digitados na tela do CustomTkinter
-        valor = self.entry_valor.get()
-        cliente = self.entry_cliente.get()
+        # 1. Captura o nome do cliente digitado na tela do Admin
+        cliente_procurado = self.entry_cliente.get().strip()
+        valor_aporte = self.entry_valor.get().strip()
 
-        # Validação simples para não salvar campos vazios
-        if not valor or not cliente:
-            messagebox.showwarning("Aviso", "Por favor, preencha todos os campos!")
+        if not cliente_procurado:
+            messagebox.showwarning("Aviso", "Por favor, digite o nome do cliente para dar o aceite!")
             return
 
-        caminho_planilha = "clientes_cadastro.xlsx"  # Ajuste para o nome real do seu arquivo
+        caminho_planilha = "clientes_cadastro.xlsx"  # Substitua pelo nome correto do seu arquivo
 
         try:
-            # 2. Verifica se a planilha já existe para carregar ou criar uma nova
-            if os.path.exists(caminho_planilha):
-                df = pd.read_excel(caminho_planilha)
-            else:
-                # Se não existir, cria o cabeçalho padrão do seu projeto
-                df = pd.DataFrame(columns=["Cliente", "Valor", "Status"])
+            if not os.path.exists(caminho_planilha):
+                messagebox.showerror("Erro", f"A planilha '{caminho_planilha}' não foi encontrada!")
+                return
 
-            # 3. LÓGICA DE ACEITE: Se você está aprovando, o status muda para 'Aprovado'
-            # Aqui criamos a nova linha de dados
-            nova_linha = {
-                "Cliente": cliente,
-                "Valor": valor,
-                "Status": "Aprovado"  # Define o status correto que o Admin precisa
-            }
+            # 2. Carrega a planilha atual
+            df = pd.read_excel(caminho_planilha)
 
-            # Adiciona os dados na memória do Python
-            df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
+            # Garante que as colunas textuais não tenham espaços extras para não falhar na busca
+            df['Cliente'] = df['Cliente'].astype(str).str.strip()
 
-            # 4. Grava fisicamente de volta na planilha
-            df.to_excel(caminho_planilha, index=False)
+            # 3. Procura se o cliente realmente existe na planilha
+            if cliente_procurado in df['Cliente'].values:
+                
+                # 4. ATUALIZAÇÃO DA LINHA EXISTENTE:
+                # Localiza a linha do cliente e altera a coluna 'Status' para 'Aprovado'
+                df.loc[df['Cliente'] == cliente_procurado, 'Status'] = 'Aprovado'
+                
+                # Se o admin digitou um valor na tela, atualiza o valor do aporte também
+                if valor_aporte:
+                    df.loc[df['Cliente'] == cliente_procurado, 'Valor'] = valor_aporte
 
-            # 5. Feedback visual de sucesso para o Administrador
-            messagebox.showinfo("Sucesso", f"Cliente {cliente} aceito e atualizado na planilha!")
+                # 5. Salva a planilha com a modificação (sem duplicar linhas)
+                df.to_excel(caminho_planilha, index=False)
+
+                messagebox.showinfo("Sucesso", f"O status de '{cliente_procurado}' foi alterado para APROVADO!")
+                
+                # Limpa os campos da tela
+                self.entry_valor.delete(0, "end")
+                self.entry_cliente.delete(0, "end")
             
-            # Limpa os campos da tela após o sucesso
-            self.entry_valor.delete(0, "end")
-            self.entry_cliente.delete(0, "end")
+            else:
+                messagebox.showwarning("Não Encontrado", f"Cliente '{cliente_procurado}' não foi localizado na planilha.")
 
         except PermissionError:
-            # Erro muito comum: a planilha está aberta no Excel e travou a escrita do Python
-            messagebox.showerror("Erro de Permissão", "Feche a planilha Excel antes de dar o aceite!")
+            messagebox.showerror("Erro de Permissão", "Feche a planilha Excel antes de clicar em confirmar!")
         except Exception as e:
-            # Captura qualquer outro erro de código ou caminho
-            messagebox.showerror("Erro", f"Não foi possível atualizar a planilha: {e}")
+            messagebox.showerror("Erro", f"Falha ao atualizar status: {e}")
 
