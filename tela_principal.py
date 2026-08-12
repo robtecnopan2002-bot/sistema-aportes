@@ -82,7 +82,7 @@ class AplicativoRCB(ctk.CTk):
         )
         self.btn_salvar.pack(pady=20, padx=40, fill="x")
 
-           def acao_salvar_aporte(self):
+        def acao_salvar_aporte(self):
         import pandas as pd
         from tkinter import messagebox
         import os
