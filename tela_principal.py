@@ -87,52 +87,55 @@ class AplicativoRCB(ctk.CTk):
         from tkinter import messagebox
         import os
 
-        # 1. Captura o nome do cliente digitado na tela do Admin
+        # 1. Captura e limpa espaços extras do texto digitado
         cliente_procurado = self.entry_cliente.get().strip()
         valor_aporte = self.entry_valor.get().strip()
 
         if not cliente_procurado:
-            messagebox.showwarning("Aviso", "Por favor, digite o nome do cliente para dar o aceite!")
+            messagebox.showwarning("Aviso", "Por favor, digite o nome do cliente!")
             return
 
-        caminho_planilha = "clientes_cadastro.xlsx"  # Substitua pelo nome correto do seu arquivo
+        caminho_planilha = "clientes_cadastro.xlsx"  # Ajuste para o seu arquivo real
 
         try:
             if not os.path.exists(caminho_planilha):
-                messagebox.showerror("Erro", f"A planilha '{caminho_planilha}' não foi encontrada!")
+                messagebox.showerror("Erro", f"Planilha '{caminho_planilha}' não encontrada!")
                 return
 
-            # 2. Carrega a planilha atual
+            # 2. Carrega a planilha
             df = pd.read_excel(caminho_planilha)
 
-            # Garante que as colunas textuais não tenham espaços extras para não falhar na busca
-            df['Cliente'] = df['Cliente'].astype(str).str.strip()
+            # 3. NORMALIZAÇÃO PARA VALIDAÇÃO (Garante que espaços ou maiúsculas não quebrem a busca)
+            # Cria cópias temporárias em minúsculo e sem espaços para comparar com segurança
+            cliente_busca_limpo = cliente_procurado.lower()
+            coluna_cliente_limpa = df['Cliente'].astype(str).str.strip().str.lower()
 
-            # 3. Procura se o cliente realmente existe na planilha
-            if cliente_procurado in df['Cliente'].values:
+            # 4. Procura o cliente na lista normalizada
+            if cliente_busca_limpo in coluna_cliente_limpa.values:
                 
-                # 4. ATUALIZAÇÃO DA LINHA EXISTENTE:
-                # Localiza a linha do cliente e altera a coluna 'Status' para 'Aprovado'
-                df.loc[df['Cliente'] == cliente_procurado, 'Status'] = 'Aprovado'
+                # Encontra a posição (índice) exata da linha na planilha
+                indice_cliente = coluna_cliente_limpa[coluna_cliente_limpa == cliente_busca_limpo].index
+
+                # 5. GRAVAÇÃO FORÇADA (Usa o índice localizado para garantir a alteração)
+                df.loc[indice_cliente, 'Status'] = 'Aprovado'
                 
-                # Se o admin digitou um valor na tela, atualiza o valor do aporte também
                 if valor_aporte:
-                    df.loc[df['Cliente'] == cliente_procurado, 'Valor'] = valor_aporte
+                    df.loc[indice_cliente, 'Valor'] = valor_aporte
 
-                # 5. Salva a planilha com a modificação (sem duplicar linhas)
+                # 6. Salva o arquivo de volta
                 df.to_excel(caminho_planilha, index=False)
 
-                messagebox.showinfo("Sucesso", f"O status de '{cliente_procurado}' foi alterado para APROVADO!")
+                messagebox.showinfo("Sucesso", f"Validação Concluída!\nCliente '{cliente_procurado}' agora é um CLIENTE APROVADO.")
                 
-                # Limpa os campos da tela
+                # Limpa os campos
                 self.entry_valor.delete(0, "end")
                 self.entry_cliente.delete(0, "end")
             
             else:
-                messagebox.showwarning("Não Encontrado", f"Cliente '{cliente_procurado}' não foi localizado na planilha.")
+                # Se cair aqui, o nome digitado realmente não existe igual na planilha
+                messagebox.showwarning("Não Encontrado", f"O cliente '{cliente_procurado}' não foi localizado.\nVerifique a grafia exata na planilha.")
 
         except PermissionError:
-            messagebox.showerror("Erro de Permissão", "Feche a planilha Excel antes de clicar em confirmar!")
+            messagebox.showerror("Erro de Permissão", "Feche o arquivo Excel antes de dar o aceite!")
         except Exception as e:
-            messagebox.showerror("Erro", f"Falha ao atualizar status: {e}")
-
+            messagebox.showerror("Erro Crítico", f"Falha na validação: {e}")
