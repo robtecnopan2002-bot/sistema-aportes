@@ -82,12 +82,55 @@ class AplicativoRCB(ctk.CTk):
         )
         self.btn_salvar.pack(pady=20, padx=40, fill="x")
 
-    def acao_salvar_aporte(self):
-        # Esta função será conectada à sua estrutura do SQLite futuramente
+        def acao_salvar_aporte(self):
+        import pandas as pd
+        from tkinter import messagebox
+        import os
+
+        # 1. Captura os dados digitados na tela do CustomTkinter
         valor = self.entry_valor.get()
         cliente = self.entry_cliente.get()
-        print(f"Design funcionando! Pronto para salvar no banco: {cliente} - R$ {valor}")
 
-if __name__ == "__main__":
-    app = AplicativoRCB()
-    app.mainloop()
+        # Validação simples para não salvar campos vazios
+        if not valor or not cliente:
+            messagebox.showwarning("Aviso", "Por favor, preencha todos os campos!")
+            return
+
+        caminho_planilha = "clientes_cadastro.xlsx"  # Ajuste para o nome real do seu arquivo
+
+        try:
+            # 2. Verifica se a planilha já existe para carregar ou criar uma nova
+            if os.path.exists(caminho_planilha):
+                df = pd.read_excel(caminho_planilha)
+            else:
+                # Se não existir, cria o cabeçalho padrão do seu projeto
+                df = pd.DataFrame(columns=["Cliente", "Valor", "Status"])
+
+            # 3. LÓGICA DE ACEITE: Se você está aprovando, o status muda para 'Aprovado'
+            # Aqui criamos a nova linha de dados
+            nova_linha = {
+                "Cliente": cliente,
+                "Valor": valor,
+                "Status": "Aprovado"  # Define o status correto que o Admin precisa
+            }
+
+            # Adiciona os dados na memória do Python
+            df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
+
+            # 4. Grava fisicamente de volta na planilha
+            df.to_excel(caminho_planilha, index=False)
+
+            # 5. Feedback visual de sucesso para o Administrador
+            messagebox.showinfo("Sucesso", f"Cliente {cliente} aceito e atualizado na planilha!")
+            
+            # Limpa os campos da tela após o sucesso
+            self.entry_valor.delete(0, "end")
+            self.entry_cliente.delete(0, "end")
+
+        except PermissionError:
+            # Erro muito comum: a planilha está aberta no Excel e travou a escrita do Python
+            messagebox.showerror("Erro de Permissão", "Feche a planilha Excel antes de dar o aceite!")
+        except Exception as e:
+            # Captura qualquer outro erro de código ou caminho
+            messagebox.showerror("Erro", f"Não foi possível atualizar a planilha: {e}")
+
